@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".userdetails"
+    android:background="@color/white"
+    android:padding="35dp">
+
+    <TextView
+        android:id="@+id/header"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Enter your details"
+        android:textSize="24dp"
+        android:textStyle="bold"
+        android:textColor="@color/black"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"/>
+
+    <TextView
+        android:id="@+id/subhead"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="User details"
+        android:layout_marginTop="40dp"
+        android:textStyle="bold"
+        android:textColor="@color/black"
+        app:layout_constraintTop_toTopOf="@id/header"
+        android:textSize="16sp"
+        app:layout_constraintStart_toStartOf="parent"/>
+
+    <TextView
+        android:id="@+id/namehead"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Name :"
+        android:textStyle="bold"
+        android:textSize="18dp"
+        android:layout_marginTop="80dp"
+        app:layout_constraintTop_toTopOf="@id/subhead"
+        android:textColor="@color/black"
+        app:layout_constraintStart_toStartOf="parent"/>
+
+    <EditText
+        android:id="@+id/name"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        app:layout_constraintTop_toTopOf="@id/namehead"
+        android:layout_marginTop="25dp"
+        android:background="@drawable/input_box"
+        android:hint="Enter the name"
+        android:gravity="center"
+        android:textColor="@color/black"
+        app:layout_constraintStart_toStartOf="parent"/>
+
+    <TextView
+        android:id="@+id/agehead"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Age :"
+        android:layout_marginTop="80dp"
+        app:layout_constraintTop_toTopOf="@id/name"
+        android:textSize="18dp"
+        android:textStyle="bold"
+        android:textColor="@color/black"
+        app:layout_constraintStart_toStartOf="parent"/>
+
+    <EditText
+        android:id="@+id/age"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:hint="Enter your age"
+        app:layout_constraintTop_toTopOf="@id/agehead"
+        android:layout_marginTop="25dp"
+        android:background="@drawable/input_box"
+        android:gravity="center"
+        android:textColor="@color/black"
+        android:inputType="number"
+        app:layout_constraintStart_toStartOf="parent"/>
+
+    <TextView
+        android:id="@+id/genderhead"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Gender :"
+        android:textStyle="bold"
+        android:textSize="18dp"
+        app:layout_constraintTop_toTopOf="@id/age"
+        android:layout_marginTop="80dp"
+        android:textColor="@color/black"
+        app:layout_constraintStart_toStartOf="parent"/>
+
+    <EditText
+        android:id="@+id/gender"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:background="@drawable/input_box"
+        android:hint="M/F"
+        android:gravity="center"
+        app:layout_constraintTop_toTopOf="@id/genderhead"
+        android:layout_marginTop="25dp"
+        android:textColor="@color/black"/>
+
+
+    <TextView
+        android:id="@+id/addresshead"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Address :"
+        android:textStyle="bold"
+        android:textSize="18dp"
+        app:layout_constraintTop_toTopOf="@id/gender"
+        android:layout_marginTop="80dp"
+        android:textColor="@color/black"
+        app:layout_constraintStart_toStartOf="parent"/>
+
+    <EditText
+        android:id="@+id/address"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:background="@drawable/input_box"
+        android:hint="City,State"
+        android:gravity="center"
+        app:layout_constraintTop_toTopOf="@id/addresshead"
+        android:layout_marginTop="25dp"
+        android:textColor="@color/black"/>
+
+    <Button
+        android:id="@+id/submitbtn"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="Submit"
+        android:textColor="@color/white"
+        android:textStyle="bold"
+        android:textSize="20dp"
+        android:layout_marginTop="80dp"
+        app:layout_constraintTop_toTopOf="@id/address"
+        android:clickable="true"
+        app:layout_constraintStart_toStartOf="parent"
+        android:backgroundTint="@color/Blue"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
