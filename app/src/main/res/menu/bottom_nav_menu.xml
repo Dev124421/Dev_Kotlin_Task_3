@@ -4,16 +4,21 @@
     <item
         android:id="@+id/nav_home"
         android:icon="@drawable/home"
-        android:title="Home"/>
+        android:title="Home" />
+
+    <item
+        android:id="@+id/nav_discover"
+        android:icon="@drawable/discover"
+        android:title="Discover" />
 
     <item
         android:id="@+id/nav_add"
         android:icon="@drawable/add"
-        android:title="Add"/>
+        android:title="Write" />
 
     <item
         android:id="@+id/nav_account"
         android:icon="@drawable/account"
-        android:title="Account"/>
+        android:title="Profile" />
 
 </menu>

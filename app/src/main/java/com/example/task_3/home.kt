@@ -49,6 +49,10 @@ class home : AppCompatActivity() {
                     fetchBlogs()
                     true
                 }
+                R.id.nav_discover -> {
+                    startActivity(Intent(this, discover::class.java))
+                    true
+                }
                 R.id.nav_add -> {
                     startActivity(Intent(this, add_data::class.java))
                     true

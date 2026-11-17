@@ -6,24 +6,24 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
-    android:background="@android:color/white">
+    android:background="@drawable/background">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/main"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingHorizontal="28dp"
-        android:paddingVertical="32dp"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="50dp"
+        android:paddingBottom="32dp"
         tools:context=".userdetails">
 
         <TextView
             android:id="@+id/header"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
             android:text="Enter your details"
-            android:textColor="#0F172A"
-            android:textSize="24sp"
+            android:textColor="@color/White"
+            android:textSize="26sp"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -32,20 +32,21 @@
             android:id="@+id/subhead"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="User details"
-            android:textColor="#64748B"
-            android:textSize="14sp"
+            android:layout_marginTop="6dp"
+            android:text="Complete your Inkora profile to get started"
+            android:textColor="@color/Grey"
+            android:textSize="13sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/header" />
 
+        <!-- Name -->
         <TextView
             android:id="@+id/namehead"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="28dp"
-            android:text="Name"
-            android:textColor="#334155"
+            android:text="Full Name"
+            android:textColor="@color/Grey"
             android:textSize="13sp"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
@@ -54,12 +55,12 @@
         <LinearLayout
             android:id="@+id/boxName"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:layout_marginTop="6dp"
+            android:layout_height="52dp"
+            android:layout_marginTop="8dp"
             android:background="@drawable/input_box"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingHorizontal="14dp"
+            android:paddingHorizontal="16dp"
             app:layout_constraintTop_toBottomOf="@id/namehead">
 
             <EditText
@@ -67,20 +68,21 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:background="@null"
-                android:hint="Enter the name"
+                android:hint="Your Name"
                 android:inputType="textPersonName"
-                android:textColor="#0F172A"
-                android:textColorHint="#94A3B8"
+                android:textColor="@color/Warm_Ivory"
+                android:textColorHint="@color/Grey"
                 android:textSize="14sp" />
         </LinearLayout>
 
+        <!-- Age -->
         <TextView
             android:id="@+id/agehead"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:text="Age"
-            android:textColor="#334155"
+            android:textColor="@color/Grey"
             android:textSize="13sp"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
@@ -89,12 +91,12 @@
         <LinearLayout
             android:id="@+id/boxAge"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:layout_marginTop="6dp"
+            android:layout_height="52dp"
+            android:layout_marginTop="8dp"
             android:background="@drawable/input_box"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingHorizontal="14dp"
+            android:paddingHorizontal="16dp"
             app:layout_constraintTop_toBottomOf="@id/agehead">
 
             <EditText
@@ -102,20 +104,21 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:background="@null"
-                android:hint="Enter your age"
+                android:hint="Your Age (e.g. 24)"
                 android:inputType="number"
-                android:textColor="#0F172A"
-                android:textColorHint="#94A3B8"
+                android:textColor="@color/Warm_Ivory"
+                android:textColorHint="@color/Grey"
                 android:textSize="14sp" />
         </LinearLayout>
 
+        <!-- Gender -->
         <TextView
             android:id="@+id/genderhead"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:text="Gender"
-            android:textColor="#334155"
+            android:textColor="@color/Grey"
             android:textSize="13sp"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
@@ -124,12 +127,12 @@
         <LinearLayout
             android:id="@+id/boxGender"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:layout_marginTop="6dp"
+            android:layout_height="52dp"
+            android:layout_marginTop="8dp"
             android:background="@drawable/input_box"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingHorizontal="14dp"
+            android:paddingHorizontal="16dp"
             app:layout_constraintTop_toBottomOf="@id/genderhead">
 
             <EditText
@@ -137,20 +140,21 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:background="@null"
-                android:hint="M/F"
-                android:inputType="textCapCharacters"
-                android:textColor="#0F172A"
-                android:textColorHint="#94A3B8"
+                android:hint="Gender (e.g. Female, Male)"
+                android:inputType="textCapWords"
+                android:textColor="@color/Warm_Ivory"
+                android:textColorHint="@color/Grey"
                 android:textSize="14sp" />
         </LinearLayout>
 
+        <!-- Address -->
         <TextView
             android:id="@+id/addresshead"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="Address"
-            android:textColor="#334155"
+            android:text="Address / Location"
+            android:textColor="@color/Grey"
             android:textSize="13sp"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
@@ -159,12 +163,12 @@
         <LinearLayout
             android:id="@+id/boxAddress"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:layout_marginTop="6dp"
+            android:layout_height="52dp"
+            android:layout_marginTop="8dp"
             android:background="@drawable/input_box"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingHorizontal="14dp"
+            android:paddingHorizontal="16dp"
             app:layout_constraintTop_toBottomOf="@id/addresshead">
 
             <EditText
@@ -172,23 +176,23 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:background="@null"
-                android:hint="City, State"
+                android:hint="City, Country"
                 android:inputType="textPostalAddress"
-                android:textColor="#0F172A"
-                android:textColorHint="#94A3B8"
+                android:textColor="@color/Warm_Ivory"
+                android:textColorHint="@color/Grey"
                 android:textSize="14sp" />
         </LinearLayout>
 
+        <!-- Submit Button -->
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/submitbtn"
             android:layout_width="match_parent"
             android:layout_height="52dp"
             android:layout_marginTop="32dp"
-            android:layout_marginBottom="24dp"
             android:background="@drawable/bg_primary_button"
             android:text="Submit"
             android:textAllCaps="false"
-            android:textColor="@android:color/white"
+            android:textColor="@color/White"
             android:textSize="16sp"
             android:textStyle="bold"
             app:layout_constraintTop_toBottomOf="@id/boxAddress"

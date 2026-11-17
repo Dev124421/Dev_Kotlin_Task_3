@@ -1,10 +1,12 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Base.Theme.Task_3" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <item name="colorPrimary">@color/Blue</item>
-        <item name="colorPrimaryVariant">@color/Blue</item>
-        <item name="android:statusBarColor">@color/Blue</item>
+        <item name="colorPrimary">@color/Soft_Violet</item>
+        <item name="colorPrimaryVariant">@color/Midnight_indigo</item>
+        <item name="colorSecondary">@color/Coral_Accent</item>
+        <item name="android:statusBarColor">@color/Midnight_indigo</item>
+        <item name="android:windowBackground">@color/Black</item>
+        <item name="android:navigationBarColor">@color/Midnight_indigo</item>
     </style>
 
     <style name="Theme.Task_3" parent="Base.Theme.Task_3" />

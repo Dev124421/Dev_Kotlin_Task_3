@@ -53,6 +53,11 @@ class profile : AppCompatActivity() {
                     finish()
                     true
                 }
+                R.id.nav_discover -> {
+                    startActivity(Intent(this, discover::class.java))
+                    finish()
+                    true
+                }
                 R.id.nav_add -> {
                     startActivity(Intent(this, add_data::class.java))
                     finish()
