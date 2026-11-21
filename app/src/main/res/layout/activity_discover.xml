@@ -6,7 +6,8 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/Black"
+    android:fitsSystemWindows="true"
+    android:background="@color/primary_background"
     tools:context=".discover">
 
     <ScrollView
@@ -22,10 +23,10 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:paddingHorizontal="16dp"
-            android:paddingTop="20dp"
+            android:paddingTop="18dp"
             android:paddingBottom="24dp">
 
-            <!-- Search Bar -->
+            <!-- Search Bar with Filter Icon -->
             <LinearLayout
                 android:id="@+id/searchContainer"
                 android:layout_width="match_parent"
@@ -43,19 +44,27 @@
 
                 <EditText
                     android:id="@+id/etSearch"
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_marginStart="12dp"
+                    android:layout_weight="1"
                     android:background="@null"
-                    android:hint="Search blogs, topics, creators..."
+                    android:hint="Search blogs, topics..."
                     android:imeOptions="actionSearch"
                     android:inputType="text"
-                    android:textColor="@color/Warm_Ivory"
-                    android:textColorHint="@color/Grey"
+                    android:textColor="@color/primary_text"
+                    android:textColorHint="@color/secondary_text"
                     android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/btnFilter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="⚙️"
+                    android:textSize="15sp" />
             </LinearLayout>
 
-            <!-- Horizontal Category Filter Pills -->
+            <!-- Horizontal Category Filter Pills: Tech, Design, Life, Art -->
             <HorizontalScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -68,16 +77,16 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
 
-                    <!-- Technology (Active / Selected) -->
+                    <!-- Tech (Active / Selected) -->
                     <TextView
                         android:id="@+id/chipTech"
                         android:layout_width="wrap_content"
                         android:layout_height="36dp"
                         android:background="@drawable/bg_pill_filter_selected"
                         android:gravity="center"
-                        android:paddingHorizontal="18dp"
-                        android:text="Technology"
-                        android:textColor="@color/White"
+                        android:paddingHorizontal="20dp"
+                        android:text="Tech"
+                        android:textColor="@color/white"
                         android:textSize="13sp"
                         android:textStyle="bold" />
 
@@ -89,9 +98,9 @@
                         android:layout_marginStart="8dp"
                         android:background="@drawable/bg_pill_filter_unselected"
                         android:gravity="center"
-                        android:paddingHorizontal="18dp"
+                        android:paddingHorizontal="20dp"
                         android:text="Design"
-                        android:textColor="@color/Warm_Ivory"
+                        android:textColor="@color/secondary_text"
                         android:textSize="13sp" />
 
                     <!-- Life -->
@@ -102,9 +111,9 @@
                         android:layout_marginStart="8dp"
                         android:background="@drawable/bg_pill_filter_unselected"
                         android:gravity="center"
-                        android:paddingHorizontal="18dp"
+                        android:paddingHorizontal="20dp"
                         android:text="Life"
-                        android:textColor="@color/Warm_Ivory"
+                        android:textColor="@color/secondary_text"
                         android:textSize="13sp" />
 
                     <!-- Art -->
@@ -115,36 +124,39 @@
                         android:layout_marginStart="8dp"
                         android:background="@drawable/bg_pill_filter_unselected"
                         android:gravity="center"
-                        android:paddingHorizontal="18dp"
+                        android:paddingHorizontal="20dp"
                         android:text="Art"
-                        android:textColor="@color/Warm_Ivory"
-                        android:textSize="13sp" />
-
-                    <!-- Business -->
-                    <TextView
-                        android:id="@+id/chipBusiness"
-                        android:layout_width="wrap_content"
-                        android:layout_height="36dp"
-                        android:layout_marginStart="8dp"
-                        android:background="@drawable/bg_pill_filter_unselected"
-                        android:gravity="center"
-                        android:paddingHorizontal="18dp"
-                        android:text="Business"
-                        android:textColor="@color/Warm_Ivory"
+                        android:textColor="@color/secondary_text"
                         android:textSize="13sp" />
                 </LinearLayout>
             </HorizontalScrollView>
 
-            <!-- Section Title: Trending posts -->
-            <TextView
-                android:layout_width="wrap_content"
+            <!-- Section Title: Trending posts with Red Arrow -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
                 android:layout_marginBottom="12dp"
-                android:text="Trending posts"
-                android:textColor="@color/White"
-                android:textSize="18sp"
-                android:textStyle="bold" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Trending posts"
+                    android:textColor="@color/primary_text"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="→"
+                    android:textColor="@color/primary_red"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
             <!-- Trending Cards Grid / Layout (with blank image placeholders as requested) -->
             <LinearLayout
@@ -175,8 +187,8 @@
                             android:background="@drawable/bg_pill_filter_unselected"
                             android:paddingHorizontal="8dp"
                             android:paddingVertical="2dp"
-                            android:text="❤️ 2.4K"
-                            android:textColor="@color/Coral_Accent"
+                            android:text="❤️ 4.2K"
+                            android:textColor="@color/primary_red"
                             android:textSize="10sp"
                             android:textStyle="bold" />
                     </FrameLayout>
@@ -188,7 +200,7 @@
                         android:ellipsize="end"
                         android:maxLines="2"
                         android:text="The Future of AI in Design"
-                        android:textColor="@color/White"
+                        android:textColor="@color/primary_text"
                         android:textSize="13sp"
                         android:textStyle="bold" />
 
@@ -209,7 +221,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="6dp"
                             android:text="Alex Rivera"
-                            android:textColor="@color/Grey"
+                            android:textColor="@color/secondary_text"
                             android:textSize="11sp" />
                     </LinearLayout>
                 </LinearLayout>
@@ -237,8 +249,8 @@
                             android:background="@drawable/bg_pill_filter_unselected"
                             android:paddingHorizontal="8dp"
                             android:paddingVertical="2dp"
-                            android:text="❤️ 1.8K"
-                            android:textColor="@color/Coral_Accent"
+                            android:text="❤️ 2.9K"
+                            android:textColor="@color/primary_red"
                             android:textSize="10sp"
                             android:textStyle="bold" />
                     </FrameLayout>
@@ -249,8 +261,8 @@
                         android:layout_marginTop="8dp"
                         android:ellipsize="end"
                         android:maxLines="2"
-                        android:text="Design Systems in 2026"
-                        android:textColor="@color/White"
+                        android:text="Design Inspiration 2026"
+                        android:textColor="@color/primary_text"
                         android:textSize="13sp"
                         android:textStyle="bold" />
 
@@ -271,7 +283,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="6dp"
                             android:text="Alex Rivera"
-                            android:textColor="@color/Grey"
+                            android:textColor="@color/secondary_text"
                             android:textSize="11sp" />
                     </LinearLayout>
                 </LinearLayout>
@@ -285,7 +297,7 @@
         android:id="@+id/bottom_nav"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/Midnight_indigo"
+        android:background="@color/secondary_background"
         app:elevation="12dp"
         app:itemIconTint="@color/nav_item_color"
         app:itemTextColor="@color/nav_item_color"

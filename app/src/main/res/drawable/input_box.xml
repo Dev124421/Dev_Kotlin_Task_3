@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
-    <solid android:color="@color/Midnight_indigo" />
+    <solid android:color="@color/secondary_background" />
     <stroke
         android:width="1dp"
-        android:color="@color/Grey" />
+        android:color="@color/card_surface" />
     <corners android:radius="14dp" />
 </shape>

@@ -1,12 +1,12 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
+    <!-- Base application theme (Design 2 - Dark Premium). -->
     <style name="Base.Theme.Task_3" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/Soft_Violet</item>
-        <item name="colorPrimaryVariant">@color/Midnight_indigo</item>
-        <item name="colorSecondary">@color/Coral_Accent</item>
-        <item name="android:statusBarColor">@color/Midnight_indigo</item>
-        <item name="android:windowBackground">@color/Black</item>
-        <item name="android:navigationBarColor">@color/Midnight_indigo</item>
+        <item name="colorPrimary">@color/primary_red</item>
+        <item name="colorPrimaryVariant">@color/secondary_background</item>
+        <item name="colorSecondary">@color/primary_red</item>
+        <item name="android:statusBarColor">@color/primary_background</item>
+        <item name="android:windowBackground">@color/primary_background</item>
+        <item name="android:navigationBarColor">@color/secondary_background</item>
     </style>
 
     <style name="Theme.Task_3" parent="Base.Theme.Task_3" />

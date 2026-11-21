@@ -6,7 +6,8 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/Black"
+    android:fitsSystemWindows="true"
+    android:background="@color/primary_background"
     tools:context=".add_data">
 
     <!-- Top Bar -->
@@ -24,7 +25,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Create Post"
-            android:textColor="@color/White"
+            android:textColor="@color/primary_text"
             android:textSize="20sp"
             android:textStyle="bold" />
     </LinearLayout>
@@ -33,7 +34,7 @@
         android:id="@+id/dividerTop"
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="@color/Grey"
+        android:background="@color/card_surface"
         app:layout_constraintTop_toBottomOf="@id/topBar" />
 
     <androidx.core.widget.NestedScrollView
@@ -64,7 +65,7 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:text="🖼️ Cover Image Area"
-                    android:textColor="@color/Grey"
+                    android:textColor="@color/secondary_text"
                     android:textSize="13sp"
                     android:textStyle="bold" />
             </FrameLayout>
@@ -75,7 +76,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
                 android:text="Title"
-                android:textColor="@color/Grey"
+                android:textColor="@color/secondary_text"
                 android:textSize="13sp"
                 android:textStyle="bold" />
 
@@ -88,8 +89,8 @@
                 android:hint="Enter post title"
                 android:inputType="textCapSentences"
                 android:paddingHorizontal="16dp"
-                android:textColor="@color/Warm_Ivory"
-                android:textColorHint="@color/Grey"
+                android:textColor="@color/primary_text"
+                android:textColorHint="@color/secondary_text"
                 android:textSize="14sp" />
 
             <!-- Content Label -->
@@ -98,7 +99,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
                 android:text="Content"
-                android:textColor="@color/Grey"
+                android:textColor="@color/secondary_text"
                 android:textSize="13sp"
                 android:textStyle="bold" />
 
@@ -112,8 +113,8 @@
                 android:hint="Write your story..."
                 android:inputType="textMultiLine"
                 android:padding="16dp"
-                android:textColor="@color/Warm_Ivory"
-                android:textColorHint="@color/Grey"
+                android:textColor="@color/primary_text"
+                android:textColorHint="@color/secondary_text"
                 android:textSize="14sp"
                 android:lineSpacingExtra="3dp" />
 
@@ -126,7 +127,7 @@
                 android:background="@drawable/bg_primary_button"
                 android:text="Publish"
                 android:textAllCaps="false"
-                android:textColor="@color/White"
+                android:textColor="@color/white"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
@@ -138,7 +139,7 @@
         android:id="@+id/bottom_nav"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/Midnight_indigo"
+        android:background="@color/secondary_background"
         app:elevation="12dp"
         app:itemIconTint="@color/nav_item_color"
         app:itemTextColor="@color/nav_item_color"

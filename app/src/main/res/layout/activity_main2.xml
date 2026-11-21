@@ -5,6 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
     android:fillViewport="true"
     android:background="@drawable/background">
 
@@ -13,7 +14,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingHorizontal="24dp"
-        android:paddingTop="60dp"
+        android:paddingTop="50dp"
         android:paddingBottom="32dp"
         tools:context=".MainActivity2">
 
@@ -21,8 +22,8 @@
             android:id="@+id/tvWelcomeTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Welcome back\nto Inkora"
-            android:textColor="@color/White"
+            android:text="Welcome back\nto Inkora 👋"
+            android:textColor="@color/primary_text"
             android:textSize="28sp"
             android:textStyle="bold"
             android:lineSpacingExtra="4dp"
@@ -30,22 +31,34 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
+        <TextView
+            android:id="@+id/tvWelcomeSubtitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Sign in to continue your journey"
+            android:textColor="@color/secondary_text"
+            android:textSize="14sp"
+            app:layout_constraintTop_toBottomOf="@id/tvWelcomeTitle"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
         <LinearLayout
             android:id="@+id/emailInputContainer"
             android:layout_width="match_parent"
             android:layout_height="54dp"
-            android:layout_marginTop="36dp"
+            android:layout_marginTop="32dp"
             android:background="@drawable/input_box"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingHorizontal="16dp"
-            app:layout_constraintTop_toBottomOf="@id/tvWelcomeTitle">
+            app:layout_constraintTop_toBottomOf="@id/tvWelcomeSubtitle">
 
             <ImageView
                 android:layout_width="20dp"
                 android:layout_height="20dp"
                 android:src="@drawable/email_icon"
-                app:tint="@color/Grey" />
+                app:tint="@color/secondary_text" />
 
             <EditText
                 android:id="@+id/loginemail"
@@ -55,8 +68,8 @@
                 android:background="@null"
                 android:hint="Email Address"
                 android:inputType="textEmailAddress"
-                android:textColor="@color/Warm_Ivory"
-                android:textColorHint="@color/Grey"
+                android:textColor="@color/primary_text"
+                android:textColorHint="@color/secondary_text"
                 android:textSize="14sp" />
         </LinearLayout>
 
@@ -75,7 +88,7 @@
                 android:layout_width="20dp"
                 android:layout_height="20dp"
                 android:src="@drawable/password_icon"
-                app:tint="@color/Grey" />
+                app:tint="@color/secondary_text" />
 
             <EditText
                 android:id="@+id/loginpassword"
@@ -86,8 +99,8 @@
                 android:background="@null"
                 android:hint="Password"
                 android:inputType="textPassword"
-                android:textColor="@color/Warm_Ivory"
-                android:textColorHint="@color/Grey"
+                android:textColor="@color/primary_text"
+                android:textColorHint="@color/secondary_text"
                 android:textSize="14sp" />
 
             <ImageView
@@ -97,7 +110,7 @@
                 android:clickable="true"
                 android:focusable="true"
                 android:src="@drawable/show_icon"
-                app:tint="@color/Grey" />
+                app:tint="@color/secondary_text" />
         </LinearLayout>
 
         <TextView
@@ -106,7 +119,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:text="Forgot Password?"
-            android:textColor="@color/Soft_Violet"
+            android:textColor="@color/primary_red"
             android:textSize="13sp"
             android:textStyle="bold"
             app:layout_constraintTop_toBottomOf="@id/passwordInputContainer"
@@ -118,9 +131,9 @@
             android:layout_height="52dp"
             android:layout_marginTop="28dp"
             android:background="@drawable/bg_primary_button"
-            android:text="Sign In"
+            android:text="Sign In  →"
             android:textAllCaps="false"
-            android:textColor="@color/White"
+            android:textColor="@color/white"
             android:textSize="16sp"
             android:textStyle="bold"
             app:layout_constraintTop_toBottomOf="@id/tvForgotPassword" />
@@ -139,7 +152,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Don't have an account? "
-                android:textColor="@color/Grey"
+                android:textColor="@color/secondary_text"
                 android:textSize="13sp" />
 
             <TextView
@@ -147,7 +160,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Sign Up"
-                android:textColor="@color/Soft_Violet"
+                android:textColor="@color/primary_red"
                 android:textSize="13sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -165,14 +178,14 @@
                 android:layout_width="0dp"
                 android:layout_height="1dp"
                 android:layout_weight="1"
-                android:background="@color/Grey" />
+                android:background="@color/card_surface" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingHorizontal="14dp"
                 android:text="OR"
-                android:textColor="@color/Grey"
+                android:textColor="@color/secondary_text"
                 android:textSize="11sp"
                 android:textStyle="bold" />
 
@@ -180,7 +193,7 @@
                 android:layout_width="0dp"
                 android:layout_height="1dp"
                 android:layout_weight="1"
-                android:background="@color/Grey" />
+                android:background="@color/card_surface" />
         </LinearLayout>
 
         <LinearLayout
@@ -205,7 +218,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
                 android:text="Sign in with Google"
-                android:textColor="@color/Warm_Ivory"
+                android:textColor="@color/primary_text"
                 android:textSize="14sp"
                 android:textStyle="bold" />
         </LinearLayout>

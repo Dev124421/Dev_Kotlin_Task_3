@@ -16,12 +16,24 @@
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
-        <!-- Blank Avatar Placeholder as requested -->
-        <View
-            android:id="@+id/avatarPlaceholder"
-            android:layout_width="38dp"
-            android:layout_height="38dp"
-            android:background="@drawable/bg_avatar_placeholder" />
+        <!-- Avatar Placeholder with red active dot -->
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <View
+                android:id="@+id/avatarPlaceholder"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:background="@drawable/bg_avatar_placeholder" />
+
+            <!-- Active Red Dot -->
+            <View
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:layout_gravity="bottom|end"
+                android:background="@drawable/bg_primary_button" />
+        </FrameLayout>
 
         <LinearLayout
             android:layout_width="0dp"
@@ -35,7 +47,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Alex Rivera"
-                android:textColor="@color/White"
+                android:textColor="@color/primary_text"
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
@@ -45,7 +57,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
                 android:text="2 hours ago"
-                android:textColor="@color/Grey"
+                android:textColor="@color/secondary_text"
                 android:textSize="11sp" />
         </LinearLayout>
 
@@ -55,7 +67,7 @@
             android:layout_height="wrap_content"
             android:paddingHorizontal="8dp"
             android:text="⋮"
-            android:textColor="@color/Grey"
+            android:textColor="@color/secondary_text"
             android:textSize="20sp" />
     </LinearLayout>
 
@@ -72,7 +84,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:text="Inkora Story"
-            android:textColor="@color/Grey"
+            android:textColor="@color/secondary_text"
             android:textSize="14sp"
             android:textStyle="bold" />
     </FrameLayout>
@@ -84,7 +96,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
         android:text="The Future of AI in Design"
-        android:textColor="@color/White"
+        android:textColor="@color/primary_text"
         android:textSize="17sp"
         android:textStyle="bold"
         android:lineSpacingExtra="2dp" />
@@ -97,8 +109,8 @@
         android:layout_marginTop="6dp"
         android:ellipsize="end"
         android:maxLines="2"
-        android:text="For the future of AI creative in Design and creative workflows..."
-        android:textColor="@color/Warm_Ivory"
+        android:text="Explore how Artificial Intelligence is shaping the future of creativity..."
+        android:textColor="@color/secondary_text"
         android:textSize="13sp"
         android:lineSpacingExtra="2dp" />
 
@@ -108,7 +120,7 @@
         android:layout_height="1dp"
         android:layout_marginTop="12dp"
         android:layout_marginBottom="10dp"
-        android:background="@color/Grey" />
+        android:background="@color/secondary_background" />
 
     <!-- Actions Footer: Like, Comment, Edit, Delete -->
     <LinearLayout
@@ -117,7 +129,7 @@
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
-        <!-- Like -->
+        <!-- Like (in Primary Red) -->
         <LinearLayout
             android:id="@+id/layoutLike"
             android:layout_width="wrap_content"
@@ -138,7 +150,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="6dp"
                 android:text="Like 2.4K"
-                android:textColor="@color/Coral_Accent"
+                android:textColor="@color/primary_red"
                 android:textSize="12sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -164,7 +176,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="6dp"
                 android:text="Comment"
-                android:textColor="@color/Warm_Ivory"
+                android:textColor="@color/secondary_text"
                 android:textSize="12sp" />
         </LinearLayout>
 
@@ -182,7 +194,7 @@
             android:minWidth="48dp"
             android:paddingHorizontal="10dp"
             android:text="Edit"
-            android:textColor="@color/Soft_Violet"
+            android:textColor="@color/secondary_text"
             android:textSize="12sp"
             android:textStyle="bold" />
 
@@ -195,7 +207,7 @@
             android:minWidth="48dp"
             android:paddingHorizontal="10dp"
             android:text="Delete"
-            android:textColor="@color/Coral_Accent"
+            android:textColor="@color/primary_red"
             android:textSize="12sp"
             android:textStyle="bold" />
     </LinearLayout>

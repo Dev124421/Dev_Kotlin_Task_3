@@ -18,6 +18,9 @@ class profile : AppCompatActivity() {
     private lateinit var ageText: TextView
     private lateinit var genderText: TextView
     private lateinit var addressText: TextView
+    private lateinit var postsCountText: TextView
+    private lateinit var followersCountText: TextView
+    private lateinit var followingCountText: TextView
     private lateinit var btnEditProfile: Button
     private lateinit var bottomNav: BottomNavigationView
 
@@ -33,13 +36,30 @@ class profile : AppCompatActivity() {
         ageText = findViewById(R.id.age)
         genderText = findViewById(R.id.gender)
         addressText = findViewById(R.id.address)
+        postsCountText = findViewById(R.id.tvPostsCount)
+        followersCountText = findViewById(R.id.tvFollowersCount)
+        followingCountText = findViewById(R.id.tvFollowingCount)
         btnEditProfile = findViewById(R.id.btnEditProfile)
         bottomNav = findViewById(R.id.bottom_nav)
+
+        // Set loading states immediately to prevent showing any fake/placeholder info
+        setLoadingState()
 
         bottomNav.selectedItemId = R.id.nav_account
         setupBottomNavigation()
         setupMenuClickListeners()
         loadUserProfile()
+    }
+
+    private fun setLoadingState() {
+        nameText.text = "Loading..."
+        userHandleText.text = "Loading..."
+        ageText.text = "Loading..."
+        genderText.text = "Loading..."
+        addressText.text = "Loading..."
+        postsCountText.text = "-"
+        followersCountText.text = "-"
+        followingCountText.text = "-"
     }
 
     private fun setupBottomNavigation() {
@@ -105,9 +125,7 @@ class profile : AppCompatActivity() {
 
         val uid = currentUser.uid
 
-        val emailPrefix = currentUser.email?.substringBefore("@") ?: "user"
-        userHandleText.text = "@$emailPrefix"
-
+        // Keep Loading... until received from Firebase
         db.collection("users")
             .document(uid)
             .get()
@@ -119,18 +137,77 @@ class profile : AppCompatActivity() {
                     val ageVal = document.get("age")
                     ageText.text = ageVal?.toString() ?: "N/A"
 
-                    document.getString("username")?.let {
-                        userHandleText.text = if (it.startsWith("@")) it else "@$it"
-                    }
+                    val handle = document.getString("username")
+                        ?: currentUser.email?.substringBefore("@")
+                        ?: "user"
+                    userHandleText.text = if (handle.startsWith("@")) handle else "@$handle"
+
+                    document.getLong("postsCount")?.let { postsCountText.text = it.toString() }
+                    document.getLong("followersCount")?.let { followersCountText.text = it.toString() }
+                    document.getLong("followingCount")?.let { followingCountText.text = it.toString() }
                 } else {
-                    nameText.text = currentUser.displayName ?: "Anonymous"
+                    nameText.text = currentUser.displayName ?: currentUser.email?.substringBefore("@") ?: "Anonymous"
+                    val handle = currentUser.email?.substringBefore("@") ?: "user"
+                    userHandleText.text = "@$handle"
                     ageText.text = "N/A"
                     genderText.text = "N/A"
                     addressText.text = "N/A"
+                    postsCountText.text = "0"
+                    followersCountText.text = "0"
+                    followingCountText.text = "0"
                 }
             }
             .addOnFailureListener { exception ->
+                nameText.text = currentUser.displayName ?: "Anonymous"
+                userHandleText.text = "@${currentUser.email?.substringBefore("@") ?: "user"}"
+                ageText.text = "N/A"
+                genderText.text = "N/A"
+                addressText.text = "N/A"
+                postsCountText.text = "0"
+                followersCountText.text = "0"
+                followingCountText.text = "0"
                 Toast.makeText(this, "Failed to load profile: ${exception.localizedMessage}", Toast.LENGTH_SHORT).show()
+            }
+
+        // Fetch user posts count from blogs collection
+        db.collection("blogs")
+            .whereEqualTo("authorId", uid)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                postsCountText.text = snapshot.size().toString()
+            }
+            .addOnFailureListener {
+                if (postsCountText.text == "-") {
+                    postsCountText.text = "0"
+                }
+            }
+
+        // Fetch followers count from subcollection
+        db.collection("users")
+            .document(uid)
+            .collection("followers")
+            .get()
+            .addOnSuccessListener { snapshot ->
+                followersCountText.text = snapshot.size().toString()
+            }
+            .addOnFailureListener {
+                if (followersCountText.text == "-") {
+                    followersCountText.text = "0"
+                }
+            }
+
+        // Fetch following count from subcollection
+        db.collection("users")
+            .document(uid)
+            .collection("following")
+            .get()
+            .addOnSuccessListener { snapshot ->
+                followingCountText.text = snapshot.size().toString()
+            }
+            .addOnFailureListener {
+                if (followingCountText.text == "-") {
+                    followingCountText.text = "0"
+                }
             }
     }
 }

@@ -35,18 +35,17 @@ class discover : AppCompatActivity() {
             findViewById<TextView>(R.id.chipTech),
             findViewById<TextView>(R.id.chipDesign),
             findViewById<TextView>(R.id.chipLife),
-            findViewById<TextView>(R.id.chipArt),
-            findViewById<TextView>(R.id.chipBusiness)
+            findViewById<TextView>(R.id.chipArt)
         )
 
         chips.forEach { chip ->
             chip.setOnClickListener {
                 chips.forEach { other ->
                     other.setBackgroundResource(R.drawable.bg_pill_filter_unselected)
-                    other.setTextColor(getColor(R.color.Warm_Ivory))
+                    other.setTextColor(getColor(R.color.secondary_text))
                 }
                 chip.setBackgroundResource(R.drawable.bg_pill_filter_selected)
-                chip.setTextColor(getColor(R.color.White))
+                chip.setTextColor(getColor(R.color.white))
                 Toast.makeText(this, "Filtered by ${chip.text}", Toast.LENGTH_SHORT).show()
             }
         }

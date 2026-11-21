@@ -21,7 +21,6 @@ class home : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_home)
 
         val refresh = findViewById<Button>(R.id.refresh)
