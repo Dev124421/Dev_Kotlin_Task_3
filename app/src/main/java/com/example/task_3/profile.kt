@@ -2,17 +2,22 @@ package com.example.task_3
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
-import android.widget.LinearLayout
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import coil.load
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 class profile : AppCompatActivity() {
 
+    private lateinit var profileAvatar: ImageView
     private lateinit var nameText: TextView
     private lateinit var userHandleText: TextView
     private lateinit var ageText: TextView
@@ -22,15 +27,34 @@ class profile : AppCompatActivity() {
     private lateinit var followersCountText: TextView
     private lateinit var followingCountText: TextView
     private lateinit var btnEditProfile: Button
+    private lateinit var btnSettings: ImageView
     private lateinit var bottomNav: BottomNavigationView
+
+    private lateinit var tabBlogs: View
+    private lateinit var tabSaved: View
+    private lateinit var tvTabBlogs: TextView
+    private lateinit var tvTabSaved: TextView
+    private lateinit var indicatorBlogs: View
+    private lateinit var indicatorSaved: View
+
+    private lateinit var rvProfileBlogs: RecyclerView
+    private lateinit var tvNoPosts: TextView
 
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
+
+    private val userBlogsList = mutableListOf<Blog>()
+    private val savedBlogsList = mutableListOf<Blog>()
+    private val displayedList = mutableListOf<Blog>()
+    private lateinit var adapter: BlogRecyclerAdapter
+
+    private var isSavedTab = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_profile)
 
+        profileAvatar = findViewById(R.id.profileAvatar)
         nameText = findViewById(R.id.name)
         userHandleText = findViewById(R.id.tvUserHandle)
         ageText = findViewById(R.id.age)
@@ -40,36 +64,188 @@ class profile : AppCompatActivity() {
         followersCountText = findViewById(R.id.tvFollowersCount)
         followingCountText = findViewById(R.id.tvFollowingCount)
         btnEditProfile = findViewById(R.id.btnEditProfile)
+        btnSettings = findViewById(R.id.btnSettings)
         bottomNav = findViewById(R.id.bottom_nav)
 
-        // Set loading states immediately to prevent showing any fake/placeholder info
-        setLoadingState()
+        tabBlogs = findViewById(R.id.tabBlogs)
+        tabSaved = findViewById(R.id.tabSaved)
+        tvTabBlogs = findViewById(R.id.tvTabBlogs)
+        tvTabSaved = findViewById(R.id.tvTabSaved)
+        indicatorBlogs = findViewById(R.id.indicatorBlogs)
+        indicatorSaved = findViewById(R.id.indicatorSaved)
+
+        rvProfileBlogs = findViewById(R.id.rvProfileBlogs)
+        tvNoPosts = findViewById(R.id.tvNoPosts)
 
         bottomNav.selectedItemId = R.id.nav_account
+
+        setupRecyclerView()
+        setupTabs()
+        setupSettingsAndEdit()
         setupBottomNavigation()
-        setupMenuClickListeners()
+
         loadUserProfile()
+        loadUserBlogs()
     }
 
-    private fun setLoadingState() {
-        nameText.text = "Loading..."
-        userHandleText.text = "Loading..."
-        ageText.text = "Loading..."
-        genderText.text = "Loading..."
-        addressText.text = "Loading..."
-        postsCountText.text = "-"
-        followersCountText.text = "-"
-        followingCountText.text = "-"
+    override fun onResume() {
+        super.onResume()
+        bottomNav.selectedItemId = R.id.nav_account
+        loadUserProfile()
+        loadUserBlogs()
+    }
+
+    private fun setupRecyclerView() {
+        val currentUid = auth.currentUser?.uid ?: ""
+        adapter = BlogRecyclerAdapter(
+            context = this,
+            blogs = displayedList,
+            currentUserId = currentUid,
+            onLikeClick = { blog, _ ->
+                Toast.makeText(this, "Liked \"${blog.title}\"", Toast.LENGTH_SHORT).show()
+            },
+            onCommentClick = {},
+            onSaveClick = { blog, pos ->
+                blog.isSaved = !blog.isSaved
+                adapter.notifyItemChanged(pos)
+            },
+            onEditClick = { blog ->
+                val intent = Intent(this, add_data::class.java).apply {
+                    putExtra("DOC_ID", blog.id)
+                    putExtra("TITLE", blog.title)
+                    putExtra("CONTENT", blog.content)
+                    putExtra("CATEGORY", blog.category)
+                    putExtra("IMAGE_URL", blog.imageUrl)
+                }
+                startActivity(intent)
+            },
+            onDeleteClick = { blog ->
+                db.collection("blogs").document(blog.id).delete()
+                    .addOnSuccessListener {
+                        Toast.makeText(this, "Blog deleted", Toast.LENGTH_SHORT).show()
+                        userBlogsList.removeAll { it.id == blog.id }
+                        updateDisplayedList()
+                    }
+            },
+            onBlogClick = {}
+        )
+        rvProfileBlogs.layoutManager = LinearLayoutManager(this)
+        rvProfileBlogs.adapter = adapter
+    }
+
+    private fun setupTabs() {
+        tabBlogs.setOnClickListener {
+            if (isSavedTab) {
+                isSavedTab = false
+                tvTabBlogs.setTextColor(getColor(R.color.primary_text))
+                indicatorBlogs.setBackgroundResource(R.drawable.bg_primary_button)
+                tvTabSaved.setTextColor(getColor(R.color.secondary_text))
+                indicatorSaved.setBackgroundColor(getColor(android.R.color.transparent))
+                updateDisplayedList()
+            }
+        }
+
+        tabSaved.setOnClickListener {
+            if (!isSavedTab) {
+                isSavedTab = true
+                tvTabSaved.setTextColor(getColor(R.color.primary_text))
+                indicatorSaved.setBackgroundResource(R.drawable.bg_primary_button)
+                tvTabBlogs.setTextColor(getColor(R.color.secondary_text))
+                indicatorBlogs.setBackgroundColor(getColor(android.R.color.transparent))
+                updateDisplayedList()
+            }
+        }
+    }
+
+    private fun setupSettingsAndEdit() {
+        // Open Settings Screen on clicking settings icon or Edit Profile
+        val openSettings = View.OnClickListener {
+            startActivity(Intent(this, SettingsActivity::class.java))
+        }
+
+        btnSettings.setOnClickListener(openSettings)
+        btnEditProfile.setOnClickListener(openSettings)
+    }
+
+    private fun loadUserProfile() {
+        val uid = auth.currentUser?.uid ?: return
+
+        db.collection("users").document(uid)
+            .get()
+            .addOnSuccessListener { doc ->
+                if (doc.exists()) {
+                    nameText.text = doc.getString("name") ?: "Alex Rivera"
+                    val username = doc.getString("username") ?: "alex_rivera"
+                    val bio = doc.getString("bio") ?: "Storyteller & Creator"
+                    userHandleText.text = "@$username • $bio"
+                    ageText.text = doc.get("age")?.toString() ?: "22"
+                    genderText.text = doc.getString("gender") ?: "Not specified"
+                    addressText.text = doc.getString("address") ?: "San Francisco, CA"
+
+                    val posts = doc.getLong("postsCount") ?: 0L
+                    postsCountText.text = posts.toString()
+                    followersCountText.text = doc.getLong("followersCount")?.toString() ?: "1.5K"
+                    followingCountText.text = doc.getLong("followingCount")?.toString() ?: "320"
+
+                    val pfpUrl = doc.getString("photoUrl") ?: doc.getString("pfpUrl") ?: ""
+                    if (pfpUrl.isNotEmpty()) {
+                        profileAvatar.load(pfpUrl) {
+                            crossfade(true)
+                        }
+                    }
+                } else {
+                    nameText.text = auth.currentUser?.displayName ?: "Inkora User"
+                    userHandleText.text = "@${auth.currentUser?.email?.substringBefore("@") ?: "user"}"
+                }
+            }
+    }
+
+    private fun loadUserBlogs() {
+        val uid = auth.currentUser?.uid ?: return
+
+        db.collection("blogs")
+            .whereEqualTo("authorId", uid)
+            .get()
+            .addOnSuccessListener { result ->
+                userBlogsList.clear()
+                for (doc in result) {
+                    val blog = Blog(
+                        id = doc.id,
+                        title = doc.getString("title") ?: "",
+                        content = doc.getString("content") ?: "",
+                        category = doc.getString("category") ?: "Tech",
+                        imageUrl = doc.getString("imageUrl") ?: "",
+                        author = doc.getString("author") ?: "You",
+                        authorId = uid,
+                        likesCount = doc.getLong("likesCount") ?: 0L,
+                        commentsCount = doc.getLong("commentsCount") ?: 0L,
+                        timestamp = doc.getLong("timestamp") ?: System.currentTimeMillis()
+                    )
+                    userBlogsList.add(blog)
+                }
+                postsCountText.text = userBlogsList.size.toString()
+                updateDisplayedList()
+            }
+    }
+
+    private fun updateDisplayedList() {
+        displayedList.clear()
+        if (isSavedTab) {
+            displayedList.addAll(savedBlogsList)
+            tvNoPosts.text = "No saved posts yet."
+        } else {
+            displayedList.addAll(userBlogsList)
+            tvNoPosts.text = "You haven't written any blogs yet."
+        }
+        adapter.notifyDataSetChanged()
+        tvNoPosts.visibility = if (displayedList.isEmpty()) View.VISIBLE else View.GONE
     }
 
     private fun setupBottomNavigation() {
         bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_home -> {
-                    val intent = Intent(this, home::class.java).apply {
-                        flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-                    }
-                    startActivity(intent)
+                    startActivity(Intent(this, home::class.java))
                     finish()
                     true
                 }
@@ -87,127 +263,5 @@ class profile : AppCompatActivity() {
                 else -> false
             }
         }
-    }
-
-    private fun setupMenuClickListeners() {
-        btnEditProfile.setOnClickListener {
-            startActivity(Intent(this, userdetails::class.java))
-        }
-
-        findViewById<LinearLayout>(R.id.optMyPosts).setOnClickListener {
-            Toast.makeText(this, "My Posts clicked", Toast.LENGTH_SHORT).show()
-        }
-
-        findViewById<LinearLayout>(R.id.optSavedPosts).setOnClickListener {
-            Toast.makeText(this, "Saved Posts clicked", Toast.LENGTH_SHORT).show()
-        }
-
-        findViewById<LinearLayout>(R.id.optDrafts).setOnClickListener {
-            Toast.makeText(this, "Drafts clicked", Toast.LENGTH_SHORT).show()
-        }
-
-        findViewById<LinearLayout>(R.id.optSettings).setOnClickListener {
-            Toast.makeText(this, "Settings clicked", Toast.LENGTH_SHORT).show()
-        }
-
-        findViewById<LinearLayout>(R.id.optHelp).setOnClickListener {
-            Toast.makeText(this, "Help & Support clicked", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun loadUserProfile() {
-        val currentUser = auth.currentUser
-        if (currentUser == null) {
-            Toast.makeText(this, "User is not logged in", Toast.LENGTH_SHORT).show()
-            finish()
-            return
-        }
-
-        val uid = currentUser.uid
-
-        // Keep Loading... until received from Firebase
-        db.collection("users")
-            .document(uid)
-            .get()
-            .addOnSuccessListener { document ->
-                if (document.exists()) {
-                    nameText.text = document.getString("name") ?: currentUser.displayName ?: "Anonymous"
-                    genderText.text = document.getString("gender") ?: "N/A"
-                    addressText.text = document.getString("address") ?: "N/A"
-                    val ageVal = document.get("age")
-                    ageText.text = ageVal?.toString() ?: "N/A"
-
-                    val handle = document.getString("username")
-                        ?: currentUser.email?.substringBefore("@")
-                        ?: "user"
-                    userHandleText.text = if (handle.startsWith("@")) handle else "@$handle"
-
-                    document.getLong("postsCount")?.let { postsCountText.text = it.toString() }
-                    document.getLong("followersCount")?.let { followersCountText.text = it.toString() }
-                    document.getLong("followingCount")?.let { followingCountText.text = it.toString() }
-                } else {
-                    nameText.text = currentUser.displayName ?: currentUser.email?.substringBefore("@") ?: "Anonymous"
-                    val handle = currentUser.email?.substringBefore("@") ?: "user"
-                    userHandleText.text = "@$handle"
-                    ageText.text = "N/A"
-                    genderText.text = "N/A"
-                    addressText.text = "N/A"
-                    postsCountText.text = "0"
-                    followersCountText.text = "0"
-                    followingCountText.text = "0"
-                }
-            }
-            .addOnFailureListener { exception ->
-                nameText.text = currentUser.displayName ?: "Anonymous"
-                userHandleText.text = "@${currentUser.email?.substringBefore("@") ?: "user"}"
-                ageText.text = "N/A"
-                genderText.text = "N/A"
-                addressText.text = "N/A"
-                postsCountText.text = "0"
-                followersCountText.text = "0"
-                followingCountText.text = "0"
-                Toast.makeText(this, "Failed to load profile: ${exception.localizedMessage}", Toast.LENGTH_SHORT).show()
-            }
-
-        // Fetch user posts count from blogs collection
-        db.collection("blogs")
-            .whereEqualTo("authorId", uid)
-            .get()
-            .addOnSuccessListener { snapshot ->
-                postsCountText.text = snapshot.size().toString()
-            }
-            .addOnFailureListener {
-                if (postsCountText.text == "-") {
-                    postsCountText.text = "0"
-                }
-            }
-
-        // Fetch followers count from subcollection
-        db.collection("users")
-            .document(uid)
-            .collection("followers")
-            .get()
-            .addOnSuccessListener { snapshot ->
-                followersCountText.text = snapshot.size().toString()
-            }
-            .addOnFailureListener {
-                if (followersCountText.text == "-") {
-                    followersCountText.text = "0"
-                }
-            }
-
-        // Fetch following count from subcollection
-        db.collection("users")
-            .document(uid)
-            .collection("following")
-            .get()
-            .addOnSuccessListener { snapshot ->
-                followingCountText.text = snapshot.size().toString()
-            }
-            .addOnFailureListener {
-                if (followingCountText.text == "-") {
-                    followingCountText.text = "0"
-                }
-            }
     }
 }

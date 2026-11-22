@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "956860524960",
-    "project_id": "task-3-4b393",
-    "storage_bucket": "task-3-4b393.firebasestorage.app"
+    "project_number": "448927131218",
+    "project_id": "inkora-1a3c7",
+    "storage_bucket": "inkora-1a3c7.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:956860524960:android:52a73aa64bb26e477f5cc5",
+        "mobilesdk_app_id": "1:448927131218:android:f6ec73dfc8fa7e48b1a18b",
         "android_client_info": {
           "package_name": "com.example.task_3"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyByhyTYOmkj1b8MB9p9L4WF9grgycmSrJs"
+          "current_key": "AIzaSyAGMF6-wp6s2LV0OfIdwq0XqZUkVGMdWGI"
         }
       ],
       "services": {

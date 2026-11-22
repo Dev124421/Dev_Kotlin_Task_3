@@ -135,8 +135,8 @@
 
             <ImageView
                 android:id="@+id/showPasswordToggle"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
+                android:layout_width="20dp"
+                android:layout_height="27dp"
                 android:clickable="true"
                 android:focusable="true"
                 android:src="@drawable/show_icon"

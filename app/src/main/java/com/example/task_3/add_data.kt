@@ -1,18 +1,21 @@
 package com.example.task_3
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
+import coil.load
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 
 class add_data : AppCompatActivity() {
@@ -23,10 +26,30 @@ class add_data : AppCompatActivity() {
     private lateinit var btnPublish: Button
     private lateinit var bottomNav: BottomNavigationView
 
+    private lateinit var coverImageBox: View
+    private lateinit var ivCoverPreview: ImageView
+    private lateinit var layoutPickPlaceholder: View
+    private lateinit var tvUploadStatus: TextView
+    private lateinit var pbUpload: ProgressBar
+
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
 
+    private var selectedCategory = "Tech"
     private var editingDocId: String? = null
+    private var imageUriString: String = ""
+
+    private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        if (uri != null) {
+            imageUriString = uri.toString()
+            ivCoverPreview.visibility = View.VISIBLE
+            layoutPickPlaceholder.visibility = View.GONE
+            ivCoverPreview.load(uri) {
+                crossfade(true)
+            }
+            tvUploadStatus.text = "Image selected"
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,18 +61,137 @@ class add_data : AppCompatActivity() {
         btnPublish = findViewById(R.id.btnPublish)
         bottomNav = findViewById(R.id.bottom_nav)
 
+        coverImageBox = findViewById(R.id.coverImageBox)
+        ivCoverPreview = findViewById(R.id.ivCoverPreview)
+        layoutPickPlaceholder = findViewById(R.id.layoutPickPlaceholder)
+        tvUploadStatus = findViewById(R.id.tvUploadStatus)
+        pbUpload = findViewById(R.id.pbUpload)
+
         bottomNav.selectedItemId = R.id.nav_add
 
+        setupCategoryChips()
         setupBottomNavigation()
 
+        // Pick cover image
+        coverImageBox.setOnClickListener {
+            pickImageLauncher.launch("image/*")
+        }
+
+        // Check if editing an existing post
         editingDocId = intent.getStringExtra("DOC_ID")
         if (editingDocId != null) {
-            setupEditMode()
-        } else {
-            setupCreateMode()
+            tvHeader.text = "Edit Post"
+            btnPublish.text = "Save Changes  →"
+            etTitle.setText(intent.getStringExtra("TITLE") ?: "")
+            etContent.setText(intent.getStringExtra("CONTENT") ?: "")
+            val cat = intent.getStringExtra("CATEGORY") ?: "Tech"
+            selectCategory(cat)
+
+            val existingImg = intent.getStringExtra("IMAGE_URL") ?: ""
+            if (existingImg.isNotEmpty()) {
+                imageUriString = existingImg
+                ivCoverPreview.visibility = View.VISIBLE
+                layoutPickPlaceholder.visibility = View.GONE
+                ivCoverPreview.load(existingImg)
+            }
         }
+
         btnPublish.setOnClickListener {
-            saveBlog()
+            savePost()
+        }
+    }
+
+    private fun setupCategoryChips() {
+        findViewById<TextView>(R.id.chipTech).setOnClickListener { selectCategory("Tech") }
+        findViewById<TextView>(R.id.chipDesign).setOnClickListener { selectCategory("Design") }
+        findViewById<TextView>(R.id.chipLife).setOnClickListener { selectCategory("Life") }
+        findViewById<TextView>(R.id.chipArt).setOnClickListener { selectCategory("Art") }
+    }
+
+    private fun selectCategory(category: String) {
+        selectedCategory = category
+        val chips = listOf(
+            findViewById<TextView>(R.id.chipTech) to "Tech",
+            findViewById<TextView>(R.id.chipDesign) to "Design",
+            findViewById<TextView>(R.id.chipLife) to "Life",
+            findViewById<TextView>(R.id.chipArt) to "Art"
+        )
+        for ((chipView, cat) in chips) {
+            if (cat == selectedCategory) {
+                chipView.setBackgroundResource(R.drawable.bg_pill_filter_selected)
+                chipView.setTextColor(getColor(R.color.white))
+            } else {
+                chipView.setBackgroundResource(R.drawable.bg_pill_filter_unselected)
+                chipView.setTextColor(getColor(R.color.secondary_text))
+            }
+        }
+    }
+
+    private fun savePost() {
+        val title = etTitle.text.toString().trim()
+        val content = etContent.text.toString().trim()
+
+        if (title.isEmpty()) {
+            etTitle.error = "Please enter a title"
+            etTitle.requestFocus()
+            return
+        }
+
+        if (content.isEmpty()) {
+            etContent.error = "Please enter some content"
+            etContent.requestFocus()
+            return
+        }
+
+        val user = auth.currentUser
+        val authorName = user?.displayName ?: user?.email?.substringBefore("@") ?: "Alex Rivera"
+        val authorId = user?.uid ?: ""
+
+        btnPublish.isEnabled = false
+        btnPublish.text = "Publishing..."
+
+        val postMap = hashMapOf(
+            "title" to title,
+            "content" to content,
+            "category" to selectedCategory,
+            "imageUrl" to imageUriString,
+            "author" to authorName,
+            "authorId" to authorId,
+            "timestamp" to System.currentTimeMillis()
+        )
+
+        if (editingDocId != null) {
+            // Update existing post
+            db.collection("blogs").document(editingDocId!!)
+                .update(postMap as Map<String, Any>)
+                .addOnSuccessListener {
+                    Toast.makeText(this, "Post updated successfully!", Toast.LENGTH_SHORT).show()
+                    finish()
+                }
+                .addOnFailureListener {
+                    btnPublish.isEnabled = true
+                    btnPublish.text = "Save Changes  →"
+                    Toast.makeText(this, it.localizedMessage, Toast.LENGTH_SHORT).show()
+                }
+        } else {
+            // Create new post
+            postMap["likesCount"] = 0L
+            postMap["commentsCount"] = 0L
+
+            db.collection("blogs").add(postMap)
+                .addOnSuccessListener {
+                    if (authorId.isNotEmpty()) {
+                        db.collection("users").document(authorId)
+                            .update("postsCount", FieldValue.increment(1))
+                    }
+                    Toast.makeText(this, "Story published successfully!", Toast.LENGTH_SHORT).show()
+                    finish()
+                }
+                .addOnFailureListener {
+                    btnPublish.isEnabled = true
+                    btnPublish.text = "Publish Story  →"
+                    Toast.makeText(this, it.localizedMessage, Toast.LENGTH_SHORT).show()
+                }
         }
     }
 
@@ -57,10 +199,7 @@ class add_data : AppCompatActivity() {
         bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_home -> {
-                    val intent = Intent(this, home::class.java).apply {
-                        flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-                    }
-                    startActivity(intent)
+                    startActivity(Intent(this, home::class.java))
                     finish()
                     true
                 }
@@ -77,130 +216,6 @@ class add_data : AppCompatActivity() {
                 }
                 else -> false
             }
-        }
-    }
-
-    private fun setupEditMode() {
-        tvHeader.text = "Edit Blog"
-        btnPublish.text = "Update"
-        etTitle.setText(intent.getStringExtra("TITLE") ?: "")
-        etContent.setText(intent.getStringExtra("CONTENT") ?: "")
-    }
-
-    private fun setupCreateMode() {
-        tvHeader.text = "Create Blog"
-        btnPublish.text = "Publish"
-
-        val currentUser = auth.currentUser
-        if (currentUser == null) {
-            Toast.makeText(this, "Please log in first", Toast.LENGTH_SHORT).show()
-            finish()
-            return
-        }
-    }
-
-    private fun saveBlog() {
-        val blogTitle = etTitle.text.toString().trim()
-        val blogContent = etContent.text.toString().trim()
-
-        if (blogTitle.isEmpty()) {
-            etTitle.error = "Please enter the title"
-            etTitle.requestFocus()
-            return
-        }
-        if (blogContent.isEmpty()) {
-            etContent.error = "Please enter the content"
-            etContent.requestFocus()
-            return
-        }
-
-        btnPublish.isEnabled = false
-
-        val currentUid = auth.currentUser?.uid.orEmpty()
-        val passedAuthor = intent.getStringExtra("AUTHOR")
-
-        if (editingDocId != null) {
-            val blogAuthor = if (!passedAuthor.isNullOrEmpty()) {
-                passedAuthor
-            } else {
-                auth.currentUser?.displayName ?: auth.currentUser?.email?.substringBefore("@") ?: "Anonymous"
-            }
-
-            val updates = mapOf(
-                "title" to blogTitle,
-                "author" to blogAuthor,
-                "content" to blogContent,
-                "updatedAt" to Timestamp.now()
-            )
-
-            db.collection("blogs")
-                .document(editingDocId!!)
-                .update(updates)
-                .addOnSuccessListener {
-                    Toast.makeText(this, "Blog updated successfully!", Toast.LENGTH_SHORT).show()
-                    finish()
-                }
-                .addOnFailureListener { e ->
-                    Toast.makeText(this, "Failed to update: ${e.message}", Toast.LENGTH_LONG).show()
-                }
-                .addOnCompleteListener {
-                    btnPublish.isEnabled = true
-                }
-        } else {
-            db.collection("users")
-                .document(currentUid)
-                .get()
-                .addOnSuccessListener { document ->
-                    val blogAuthor = if (document.exists() && !document.getString("name").isNullOrEmpty()) {
-                        document.getString("name")!!
-                    } else {
-                        auth.currentUser?.displayName ?: auth.currentUser?.email?.substringBefore("@") ?: "Anonymous"
-                    }
-
-                    val blogData = hashMapOf(
-                        "title" to blogTitle,
-                        "author" to blogAuthor,
-                        "content" to blogContent,
-                        "uid" to currentUid,
-                        "timestamp" to Timestamp.now()
-                    )
-
-                    db.collection("blogs")
-                        .add(blogData)
-                        .addOnSuccessListener {
-                            Toast.makeText(this, "Blog published successfully!", Toast.LENGTH_SHORT).show()
-                            etTitle.text?.clear()
-                            etContent.text?.clear()
-                            finish()
-                        }
-                        .addOnFailureListener { e ->
-                            Toast.makeText(this, "Failed to publish: ${e.message}", Toast.LENGTH_LONG).show()
-                            btnPublish.isEnabled = true
-                        }
-                }
-                .addOnFailureListener {
-                    val blogAuthor = auth.currentUser?.displayName ?: auth.currentUser?.email?.substringBefore("@") ?: "Anonymous"
-                    val blogData = hashMapOf(
-                        "title" to blogTitle,
-                        "author" to blogAuthor,
-                        "content" to blogContent,
-                        "uid" to currentUid,
-                        "timestamp" to Timestamp.now()
-                    )
-
-                    db.collection("blogs")
-                        .add(blogData)
-                        .addOnSuccessListener {
-                            Toast.makeText(this, "Blog published successfully!", Toast.LENGTH_SHORT).show()
-                            etTitle.text?.clear()
-                            etContent.text?.clear()
-                            finish()
-                        }
-                        .addOnFailureListener { e ->
-                            Toast.makeText(this, "Failed to publish: ${e.message}", Toast.LENGTH_LONG).show()
-                            btnPublish.isEnabled = true
-                        }
-                }
         }
     }
 }

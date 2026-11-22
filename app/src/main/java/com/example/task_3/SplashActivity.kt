@@ -17,6 +17,7 @@ class SplashActivity : AppCompatActivity() {
 
         val auth = FirebaseAuth.getInstance()
 
+        // Short splash delay before opening the right screen
         Handler(Looper.getMainLooper()).postDelayed({
             if (auth.currentUser != null) {
                 startActivity(Intent(this, home::class.java))
@@ -24,6 +25,6 @@ class SplashActivity : AppCompatActivity() {
                 startActivity(Intent(this, MainActivity2::class.java))
             }
             finish()
-        }, 1500)
+        }, 1200)
     }
 }

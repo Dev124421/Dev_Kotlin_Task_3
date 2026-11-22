@@ -31,8 +31,13 @@
 
         <ImageView
             android:id="@+id/btnSettings"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:padding="6dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:contentDescription="Settings and Options"
             android:src="@drawable/setting"
             app:tint="@color/secondary_text" />
     </LinearLayout>
@@ -59,11 +64,13 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content">
 
-                <View
+                <com.google.android.material.imageview.ShapeableImageView
                     android:id="@+id/profileAvatar"
                     android:layout_width="88dp"
                     android:layout_height="88dp"
-                    android:background="@drawable/bg_avatar_placeholder" />
+                    android:scaleType="centerCrop"
+                    android:background="@drawable/bg_avatar_placeholder"
+                    app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full" />
 
                 <!-- Online Active Dot -->
                 <View
@@ -115,7 +122,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="20dp"
                 android:background="@drawable/bg_card_dark"
                 android:gravity="center"
                 android:orientation="horizontal"
@@ -123,6 +130,7 @@
 
                 <!-- Posts -->
                 <LinearLayout
+                    android:id="@+id/layoutPosts"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -154,9 +162,12 @@
 
                 <!-- Followers -->
                 <LinearLayout
+                    android:id="@+id/layoutFollowers"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:clickable="true"
+                    android:focusable="true"
                     android:gravity="center"
                     android:orientation="vertical">
 
@@ -185,9 +196,12 @@
 
                 <!-- Following -->
                 <LinearLayout
+                    android:id="@+id/layoutFollowing"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:clickable="true"
+                    android:focusable="true"
                     android:gravity="center"
                     android:orientation="vertical">
 
@@ -210,11 +224,52 @@
                 </LinearLayout>
             </LinearLayout>
 
+            <!-- Pending Follow Requests Banner -->
+            <LinearLayout
+                android:id="@+id/cardFollowRequests"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_card_dark"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="👥"
+                    android:textSize="16sp" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
+                    android:text="Follow Requests"
+                    android:textColor="@color/primary_text"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvFollowRequestsBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_pill_filter_selected"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="2dp"
+                    android:text="0 New"
+                    android:textColor="@color/white"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
             <!-- Personal Info Details (Age, Gender, Address) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="12dp"
                 android:background="@drawable/bg_card_dark"
                 android:orientation="vertical"
                 android:padding="16dp">
@@ -297,11 +352,12 @@
             <!-- Tabs: Blogs (with red active underline) / Saved -->
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="46dp"
-                android:layout_marginTop="18dp"
+                android:layout_height="44dp"
+                android:layout_marginTop="16dp"
                 android:orientation="horizontal">
 
                 <LinearLayout
+                    android:id="@+id/tabBlogs"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
@@ -309,7 +365,7 @@
                     android:orientation="vertical">
 
                     <TextView
-                        android:id="@+id/tabBlogs"
+                        android:id="@+id/tvTabBlogs"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Blogs"
@@ -318,6 +374,7 @@
                         android:textStyle="bold" />
 
                     <View
+                        android:id="@+id/indicatorBlogs"
                         android:layout_width="24dp"
                         android:layout_height="3dp"
                         android:layout_marginTop="4dp"
@@ -325,6 +382,7 @@
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/tabSaved"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
@@ -332,7 +390,7 @@
                     android:orientation="vertical">
 
                     <TextView
-                        android:id="@+id/tabSaved"
+                        android:id="@+id/tvTabSaved"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Saved"
@@ -340,6 +398,7 @@
                         android:textSize="15sp" />
 
                     <View
+                        android:id="@+id/indicatorSaved"
                         android:layout_width="24dp"
                         android:layout_height="3dp"
                         android:layout_marginTop="4dp"
@@ -352,28 +411,26 @@
                 android:layout_height="1dp"
                 android:background="@color/secondary_background" />
 
-            <!-- Grid of User Blogs -->
-            <LinearLayout
-                android:id="@+id/userBlogsGrid"
+            <!-- User's Blogs / Saved Blogs Feed -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvProfileBlogs"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
-                android:gravity="center"
-                android:orientation="vertical">
+                android:layout_marginTop="12dp"
+                android:nestedScrollingEnabled="false" />
 
-                <TextView
-                    android:id="@+id/tvNoPosts"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:paddingVertical="20dp"
-                    android:text="No posts published yet"
-                    android:textColor="@color/secondary_text"
-                    android:textSize="13sp" />
-            </LinearLayout>
+            <TextView
+                android:id="@+id/tvNoPosts"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingVertical="20dp"
+                android:text="No posts published yet"
+                android:textColor="@color/secondary_text"
+                android:textSize="13sp" />
 
             <!-- Profile Menu Items -->
             <LinearLayout
-                android:id="@+id/optMyPosts"
+                android:id="@+id/optTheme"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:layout_marginTop="16dp"
@@ -383,23 +440,32 @@
                 android:paddingHorizontal="16dp">
 
                 <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🌓"
+                    android:textSize="16sp" />
+
+                <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
                     android:layout_weight="1"
-                    android:text="My Posts"
+                    android:text="App Theme (Dark / Light)"
                     android:textColor="@color/primary_text"
                     android:textSize="13sp" />
 
                 <TextView
+                    android:id="@+id/tvCurrentTheme"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="›"
-                    android:textColor="@color/secondary_text"
-                    android:textSize="18sp" />
+                    android:text="Dark"
+                    android:textColor="@color/primary_red"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/optSavedPosts"
+                android:id="@+id/optLogout"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:layout_marginTop="8dp"
@@ -409,90 +475,20 @@
                 android:paddingHorizontal="16dp">
 
                 <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Saved Posts"
-                    android:textColor="@color/primary_text"
-                    android:textSize="13sp" />
-
-                <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="›"
-                    android:textColor="@color/secondary_text"
-                    android:textSize="18sp" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/optDrafts"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_marginTop="8dp"
-                android:background="@drawable/input_box"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="16dp">
+                    android:text="🚪"
+                    android:textSize="16sp" />
 
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
                     android:layout_weight="1"
-                    android:text="Drafts"
-                    android:textColor="@color/primary_text"
-                    android:textSize="13sp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="›"
-                    android:textColor="@color/secondary_text"
-                    android:textSize="18sp" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/optSettings"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_marginTop="8dp"
-                android:background="@drawable/input_box"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="16dp">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Settings &amp; Theme"
-                    android:textColor="@color/primary_text"
-                    android:textSize="13sp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="›"
-                    android:textColor="@color/secondary_text"
-                    android:textSize="18sp" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/optHelp"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_marginTop="8dp"
-                android:background="@drawable/input_box"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="16dp">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Help &amp; Support"
-                    android:textColor="@color/primary_text"
-                    android:textSize="13sp" />
+                    android:text="Log Out"
+                    android:textColor="@color/primary_red"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="wrap_content"

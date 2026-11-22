@@ -63,15 +63,15 @@
 
         <TextView
             android:id="@+id/tvOptions"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingHorizontal="8dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:gravity="center"
             android:text="⋮"
             android:textColor="@color/secondary_text"
             android:textSize="20sp" />
     </LinearLayout>
 
-    <!-- Blank Cover Image Area as requested -->
+    <!-- Cover Image Area -->
     <FrameLayout
         android:id="@+id/coverImageContainer"
         android:layout_width="match_parent"
@@ -79,13 +79,35 @@
         android:layout_marginTop="12dp"
         android:background="@drawable/bg_image_placeholder">
 
+        <ImageView
+            android:id="@+id/ivBlogCover"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:visibility="gone" />
+
         <TextView
+            android:id="@+id/tvCoverPlaceholder"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:text="Inkora Story"
             android:textColor="@color/secondary_text"
             android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvBlogCategory"
+            android:layout_width="wrap_content"
+            android:layout_height="22dp"
+            android:layout_gravity="top|end"
+            android:layout_margin="8dp"
+            android:background="@drawable/bg_pill_filter_selected"
+            android:gravity="center"
+            android:paddingHorizontal="10dp"
+            android:text="Tech"
+            android:textColor="@color/white"
+            android:textSize="10sp"
             android:textStyle="bold" />
     </FrameLayout>
 
@@ -122,7 +144,7 @@
         android:layout_marginBottom="10dp"
         android:background="@color/secondary_background" />
 
-    <!-- Actions Footer: Like, Comment, Edit, Delete -->
+    <!-- Actions Footer: Like, Comment, Save, Edit, Delete -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -139,18 +161,19 @@
             android:paddingVertical="4dp">
 
             <TextView
+                android:id="@+id/tvLikeIcon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="❤️"
-                android:textSize="13sp" />
+                android:text="🤍"
+                android:textSize="14sp" />
 
             <TextView
                 android:id="@+id/tvLikesCount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="6dp"
-                android:text="Like 2.4K"
-                android:textColor="@color/primary_red"
+                android:text="0"
+                android:textColor="@color/secondary_text"
                 android:textSize="12sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -172,10 +195,38 @@
                 android:textSize="13sp" />
 
             <TextView
+                android:id="@+id/tvCommentsCount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="6dp"
-                android:text="Comment"
+                android:text="0"
+                android:textColor="@color/secondary_text"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- Save -->
+        <LinearLayout
+            android:id="@+id/layoutSave"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="18dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingVertical="4dp">
+
+            <TextView
+                android:id="@+id/tvSaveIcon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🔖"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/tvSaveText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:text="Save"
                 android:textColor="@color/secondary_text"
                 android:textSize="12sp" />
         </LinearLayout>
@@ -185,31 +236,33 @@
             android:layout_height="1dp"
             android:layout_weight="1" />
 
-        <!-- Edit Button -->
+        <!-- Edit Button (Only visible to Author) -->
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnEdit"
             style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="36dp"
             android:minWidth="48dp"
-            android:paddingHorizontal="10dp"
+            android:paddingHorizontal="8dp"
             android:text="Edit"
             android:textColor="@color/secondary_text"
             android:textSize="12sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:visibility="gone" />
 
-        <!-- Delete Button -->
+        <!-- Delete Button (Only visible to Author) -->
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnDelete"
             style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="36dp"
             android:minWidth="48dp"
-            android:paddingHorizontal="10dp"
+            android:paddingHorizontal="8dp"
             android:text="Delete"
             android:textColor="@color/primary_red"
             android:textSize="12sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:visibility="gone" />
     </LinearLayout>
 
 </LinearLayout>
