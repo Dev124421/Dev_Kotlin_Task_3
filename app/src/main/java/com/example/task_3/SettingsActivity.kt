@@ -256,7 +256,7 @@ class SettingsActivity : AppCompatActivity() {
             We collect your email address, profile information (name, username, bio), and stories you publish.
 
             2. Storage & Security
-            All account data is securely stored and authenticated through Google Firebase infrastructure (Authentication, Cloud Firestore, and Firebase Storage).
+            All account data is securely stored and authenticated through encrypted industry-standard cloud database infrastructure with end-to-end access controls.
 
             3. Usage of Data
             Your information is used to personalize your feed, enable social engagement (likes and comments), and connect creators.
@@ -278,7 +278,7 @@ class SettingsActivity : AppCompatActivity() {
     private fun showAboutDialog() {
         AlertDialog.Builder(this)
             .setTitle("About Inkora 🪶")
-            .setMessage("Inkora v1.0\n\nA modern social storytelling and blogging platform designed for creators, designers, and thinkers to share knowledge, stories, and ideas.\n\nCreate • Connect • Grow\nPowered by Firebase")
+            .setMessage("Inkora v1.0\n\nA modern social storytelling and blogging platform designed for creators, designers, and thinkers to share knowledge, stories, and ideas.\n\nCreate • Connect • Grow")
             .setPositiveButton("Close", null)
             .show()
     }

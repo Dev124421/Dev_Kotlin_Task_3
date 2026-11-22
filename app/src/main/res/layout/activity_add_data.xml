@@ -88,7 +88,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="Tap to choose cover image (Cloudinary)"
+                        android:text="Tap to choose cover image"
                         android:textColor="@color/secondary_text"
                         android:textSize="13sp"
                         android:textStyle="bold" />

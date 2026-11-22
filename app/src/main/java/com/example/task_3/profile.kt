@@ -174,18 +174,18 @@ class profile : AppCompatActivity() {
             .get()
             .addOnSuccessListener { doc ->
                 if (doc.exists()) {
-                    nameText.text = doc.getString("name") ?: "Alex Rivera"
-                    val username = doc.getString("username") ?: "alex_rivera"
-                    val bio = doc.getString("bio") ?: "Storyteller & Creator"
-                    userHandleText.text = "@$username • $bio"
-                    ageText.text = doc.get("age")?.toString() ?: "22"
+                    nameText.text = doc.getString("name") ?: (auth.currentUser?.displayName ?: "User")
+                    val username = doc.getString("username") ?: (auth.currentUser?.email?.substringBefore("@") ?: "user")
+                    val bio = doc.getString("bio") ?: "Creator"
+                    userHandleText.text = if (bio.isNotEmpty()) "@$username • $bio" else "@$username"
+                    ageText.text = doc.get("age")?.toString() ?: "—"
                     genderText.text = doc.getString("gender") ?: "Not specified"
-                    addressText.text = doc.getString("address") ?: "San Francisco, CA"
+                    addressText.text = doc.getString("address") ?: "—"
 
                     val posts = doc.getLong("postsCount") ?: 0L
                     postsCountText.text = posts.toString()
-                    followersCountText.text = doc.getLong("followersCount")?.toString() ?: "1.5K"
-                    followingCountText.text = doc.getLong("followingCount")?.toString() ?: "320"
+                    followersCountText.text = (doc.getLong("followersCount") ?: 0L).toString()
+                    followingCountText.text = (doc.getLong("followingCount") ?: 0L).toString()
 
                     val pfpUrl = doc.getString("photoUrl") ?: doc.getString("pfpUrl") ?: ""
                     if (pfpUrl.isNotEmpty()) {

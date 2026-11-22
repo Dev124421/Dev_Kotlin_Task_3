@@ -144,7 +144,7 @@ class add_data : AppCompatActivity() {
         }
 
         val user = auth.currentUser
-        val authorName = user?.displayName ?: user?.email?.substringBefore("@") ?: "Alex Rivera"
+        val authorName = user?.displayName ?: user?.email?.substringBefore("@") ?: "Creator"
         val authorId = user?.uid ?: ""
 
         btnPublish.isEnabled = false
