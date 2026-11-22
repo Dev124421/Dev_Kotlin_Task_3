@@ -97,6 +97,11 @@ class MainActivity : AppCompatActivity() {
 
                 if (task.isSuccessful) {
                     val uid = auth.currentUser?.uid ?: ""
+                    val profileUpdates = com.google.firebase.auth.UserProfileChangeRequest.Builder()
+                        .setDisplayName(name)
+                        .build()
+                    auth.currentUser?.updateProfile(profileUpdates)
+
                     val userData = hashMapOf(
                         "uid" to uid,
                         "name" to name,

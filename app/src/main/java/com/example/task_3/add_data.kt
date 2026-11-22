@@ -17,6 +17,8 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
+import java.util.UUID
 
 class add_data : AppCompatActivity() {
 
@@ -31,23 +33,29 @@ class add_data : AppCompatActivity() {
     private lateinit var layoutPickPlaceholder: View
     private lateinit var tvUploadStatus: TextView
     private lateinit var pbUpload: ProgressBar
+    private lateinit var btnRemoveCover: TextView
 
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
+    private val storage = FirebaseStorage.getInstance()
 
     private var selectedCategory = "Tech"
     private var editingDocId: String? = null
-    private var imageUriString: String = ""
+    private var selectedImageUri: Uri? = null
+    private var currentImageUrl: String = ""
+    private var authorPhotoUrl: String = ""
+    private var cachedAuthorName: String = ""
 
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         if (uri != null) {
-            imageUriString = uri.toString()
+            selectedImageUri = uri
             ivCoverPreview.visibility = View.VISIBLE
             layoutPickPlaceholder.visibility = View.GONE
+            btnRemoveCover.visibility = View.VISIBLE
             ivCoverPreview.load(uri) {
                 crossfade(true)
             }
-            tvUploadStatus.text = "Image selected"
+            tvUploadStatus.text = "Cover photo selected"
         }
     }
 
@@ -66,15 +74,28 @@ class add_data : AppCompatActivity() {
         layoutPickPlaceholder = findViewById(R.id.layoutPickPlaceholder)
         tvUploadStatus = findViewById(R.id.tvUploadStatus)
         pbUpload = findViewById(R.id.pbUpload)
+        btnRemoveCover = findViewById(R.id.btnRemoveCover)
 
         bottomNav.selectedItemId = R.id.nav_add
 
         setupCategoryChips()
         setupBottomNavigation()
+        loadAuthorProfile()
 
         // Pick cover image
         coverImageBox.setOnClickListener {
             pickImageLauncher.launch("image/*")
+        }
+
+        // Remove cover image
+        btnRemoveCover.setOnClickListener {
+            selectedImageUri = null
+            currentImageUrl = ""
+            ivCoverPreview.setImageDrawable(null)
+            ivCoverPreview.visibility = View.GONE
+            layoutPickPlaceholder.visibility = View.VISIBLE
+            btnRemoveCover.visibility = View.GONE
+            tvUploadStatus.text = "Tap to choose cover image"
         }
 
         // Check if editing an existing post
@@ -89,16 +110,30 @@ class add_data : AppCompatActivity() {
 
             val existingImg = intent.getStringExtra("IMAGE_URL") ?: ""
             if (existingImg.isNotEmpty()) {
-                imageUriString = existingImg
+                currentImageUrl = existingImg
                 ivCoverPreview.visibility = View.VISIBLE
                 layoutPickPlaceholder.visibility = View.GONE
-                ivCoverPreview.load(existingImg)
+                btnRemoveCover.visibility = View.VISIBLE
+                ivCoverPreview.load(existingImg) {
+                    crossfade(true)
+                }
             }
         }
 
         btnPublish.setOnClickListener {
             savePost()
         }
+    }
+
+    private fun loadAuthorProfile() {
+        val uid = auth.currentUser?.uid ?: return
+        db.collection("users").document(uid).get()
+            .addOnSuccessListener { doc ->
+                if (doc.exists()) {
+                    cachedAuthorName = doc.getString("name") ?: auth.currentUser?.displayName ?: "Creator"
+                    authorPhotoUrl = doc.getString("photoUrl") ?: doc.getString("pfpUrl") ?: auth.currentUser?.photoUrl?.toString() ?: ""
+                }
+            }
     }
 
     private fun setupCategoryChips() {
@@ -143,9 +178,44 @@ class add_data : AppCompatActivity() {
             return
         }
 
+        // If a new local image was selected, upload it to Firebase Storage first
+        if (selectedImageUri != null) {
+            btnPublish.isEnabled = false
+            btnPublish.text = "Uploading cover image..."
+            pbUpload.visibility = View.VISIBLE
+
+            val coverRef = storage.reference.child("blog_covers/${UUID.randomUUID()}.jpg")
+            coverRef.putFile(selectedImageUri!!)
+                .continueWithTask { coverRef.downloadUrl }
+                .addOnSuccessListener { downloadUrl ->
+                    pbUpload.visibility = View.GONE
+                    currentImageUrl = downloadUrl.toString()
+                    commitPostToFirestore(title, content, currentImageUrl)
+                }
+                .addOnFailureListener { e ->
+                    pbUpload.visibility = View.GONE
+                    btnPublish.isEnabled = true
+                    btnPublish.text = if (editingDocId != null) "Save Changes  →" else "Publish Story  →"
+                    Toast.makeText(this, "Cover upload failed: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                }
+        } else {
+            commitPostToFirestore(title, content, currentImageUrl)
+        }
+    }
+
+    private fun commitPostToFirestore(title: String, content: String, imageUrl: String) {
         val user = auth.currentUser
-        val authorName = user?.displayName ?: user?.email?.substringBefore("@") ?: "Creator"
+        val authorName = if (cachedAuthorName.isNotEmpty()) {
+            cachedAuthorName
+        } else {
+            user?.displayName ?: user?.email?.substringBefore("@") ?: "Creator"
+        }
         val authorId = user?.uid ?: ""
+        val authorPfp = if (authorPhotoUrl.isNotEmpty()) {
+            authorPhotoUrl
+        } else {
+            user?.photoUrl?.toString() ?: ""
+        }
 
         btnPublish.isEnabled = false
         btnPublish.text = "Publishing..."
@@ -154,9 +224,10 @@ class add_data : AppCompatActivity() {
             "title" to title,
             "content" to content,
             "category" to selectedCategory,
-            "imageUrl" to imageUriString,
+            "imageUrl" to imageUrl,
             "author" to authorName,
             "authorId" to authorId,
+            "authorPhotoUrl" to authorPfp,
             "timestamp" to System.currentTimeMillis()
         )
 

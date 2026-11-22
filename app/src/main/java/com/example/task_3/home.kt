@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
@@ -11,6 +12,8 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import coil.load
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
@@ -97,7 +100,7 @@ class home : AppCompatActivity() {
             onEditClick = { blog -> handleEdit(blog) },
             onDeleteClick = { blog -> confirmDelete(blog) },
             onBlogClick = { blog ->
-                handleEdit(blog)
+                showBlogReaderDialog(blog)
             }
         )
         rvFeed.layoutManager = LinearLayoutManager(this)
@@ -171,6 +174,7 @@ class home : AppCompatActivity() {
                         imageUrl = doc.getString("imageUrl") ?: "",
                         author = doc.getString("author") ?: "Anonymous",
                         authorId = doc.getString("authorId") ?: doc.getString("uid") ?: "",
+                        authorPhotoUrl = doc.getString("authorPhotoUrl") ?: "",
                         likesCount = doc.getLong("likesCount") ?: 0L,
                         commentsCount = doc.getLong("commentsCount") ?: 0L,
                         timestamp = doc.getLong("timestamp") ?: System.currentTimeMillis()
@@ -264,6 +268,58 @@ class home : AppCompatActivity() {
             }
             .setNegativeButton("Cancel", null)
             .show()
+    }
+
+    private fun showBlogReaderDialog(blog: Blog) {
+        val dialog = BottomSheetDialog(this)
+        val view = layoutInflater.inflate(R.layout.dialog_blog_reader, null)
+        dialog.setContentView(view)
+
+        val ivCover = view.findViewById<ImageView>(R.id.ivReaderCover)
+        val tvCategory = view.findViewById<TextView>(R.id.tvReaderCategory)
+        val tvTitle = view.findViewById<TextView>(R.id.tvReaderTitle)
+        val ivAuthorAvatar = view.findViewById<ImageView>(R.id.ivReaderAuthorAvatar)
+        val tvAuthor = view.findViewById<TextView>(R.id.tvReaderAuthor)
+        val tvTime = view.findViewById<TextView>(R.id.tvReaderTime)
+        val tvContent = view.findViewById<TextView>(R.id.tvReaderContent)
+        val btnClose = view.findViewById<View>(R.id.btnReaderClose)
+
+        tvTitle.text = blog.title
+        tvContent.text = blog.content
+        tvCategory.text = blog.category
+        tvAuthor.text = blog.author
+
+        val relativeTime = android.text.format.DateUtils.getRelativeTimeSpanString(
+            blog.timestamp,
+            System.currentTimeMillis(),
+            android.text.format.DateUtils.MINUTE_IN_MILLIS
+        )
+        tvTime.text = relativeTime
+
+        if (blog.imageUrl.isNotEmpty()) {
+            ivCover.visibility = View.VISIBLE
+            ivCover.load(blog.imageUrl) {
+                crossfade(true)
+            }
+        } else {
+            ivCover.visibility = View.GONE
+        }
+
+        if (blog.authorPhotoUrl.isNotEmpty()) {
+            ivAuthorAvatar.load(blog.authorPhotoUrl) {
+                crossfade(true)
+                placeholder(R.drawable.bg_avatar_placeholder)
+                error(R.drawable.bg_avatar_placeholder)
+            }
+        } else {
+            ivAuthorAvatar.setImageResource(R.drawable.bg_avatar_placeholder)
+        }
+
+        btnClose.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialog.show()
     }
 
     private fun setupBottomNavigation() {

@@ -8,6 +8,7 @@ data class Blog(
     val imageUrl: String = "",
     val author: String = "Anonymous",
     val authorId: String = "",
+    val authorPhotoUrl: String = "",
     val likesCount: Long = 0,
     val commentsCount: Long = 0,
     val timestamp: Long = System.currentTimeMillis(),

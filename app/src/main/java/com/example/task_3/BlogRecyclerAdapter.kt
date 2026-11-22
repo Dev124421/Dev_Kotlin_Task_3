@@ -25,6 +25,7 @@ class BlogRecyclerAdapter(
 
     class BlogViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val tvAuthor: TextView = view.findViewById(R.id.tvBlogAuthor)
+        val ivAuthorAvatar: ImageView = view.findViewById(R.id.ivBlogAuthorAvatar)
         val tvTime: TextView = view.findViewById(R.id.tvBlogTime)
         val tvCategory: TextView = view.findViewById(R.id.tvBlogCategory)
         val tvTitle: TextView = view.findViewById(R.id.tvBlogTitle)
@@ -54,6 +55,15 @@ class BlogRecyclerAdapter(
         val blog = blogs[position]
 
         holder.tvAuthor.text = blog.author
+        if (blog.authorPhotoUrl.isNotEmpty()) {
+            holder.ivAuthorAvatar.load(blog.authorPhotoUrl) {
+                crossfade(true)
+                placeholder(R.drawable.bg_avatar_placeholder)
+                error(R.drawable.bg_avatar_placeholder)
+            }
+        } else {
+            holder.ivAuthorAvatar.setImageResource(R.drawable.bg_avatar_placeholder)
+        }
         holder.tvTitle.text = blog.title
         holder.tvContent.text = blog.content
         holder.tvCategory.text = blog.category

@@ -101,6 +101,21 @@
                     android:layout_gravity="center"
                     android:indeterminateTint="@color/primary_red"
                     android:visibility="gone" />
+
+                <!-- Remove Cover Image Button -->
+                <TextView
+                    android:id="@+id/btnRemoveCover"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_gravity="top|end"
+                    android:layout_margin="10dp"
+                    android:background="@drawable/bg_pill_filter_unselected"
+                    android:gravity="center"
+                    android:text="✕"
+                    android:textColor="@color/primary_text"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
             </FrameLayout>
 
             <!-- Category Label -->

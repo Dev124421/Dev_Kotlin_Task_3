@@ -1,19 +1,24 @@
 package com.example.task_3
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 
 class profile : AppCompatActivity() {
 
@@ -42,6 +47,13 @@ class profile : AppCompatActivity() {
 
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
+    private val storage = FirebaseStorage.getInstance()
+
+    private val pfpPickerLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        if (uri != null) {
+            uploadProfilePicture(uri)
+        }
+    }
 
     private val userBlogsList = mutableListOf<Blog>()
     private val savedBlogsList = mutableListOf<Blog>()
@@ -127,7 +139,9 @@ class profile : AppCompatActivity() {
                         updateDisplayedList()
                     }
             },
-            onBlogClick = {}
+            onBlogClick = { blog ->
+                showBlogReaderDialog(blog)
+            }
         )
         rvProfileBlogs.layoutManager = LinearLayoutManager(this)
         rvProfileBlogs.adapter = adapter
@@ -158,6 +172,11 @@ class profile : AppCompatActivity() {
     }
 
     private fun setupSettingsAndEdit() {
+        // Tap avatar to change photo
+        profileAvatar.setOnClickListener {
+            pfpPickerLauncher.launch("image/*")
+        }
+
         // Open Settings Screen on clicking settings icon or Edit Profile
         val openSettings = View.OnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
@@ -165,6 +184,32 @@ class profile : AppCompatActivity() {
 
         btnSettings.setOnClickListener(openSettings)
         btnEditProfile.setOnClickListener(openSettings)
+    }
+
+    private fun uploadProfilePicture(uri: Uri) {
+        val uid = auth.currentUser?.uid ?: return
+        Toast.makeText(this, "Uploading new avatar...", Toast.LENGTH_SHORT).show()
+
+        val storageRef = storage.reference.child("profile_pictures/$uid.jpg")
+        storageRef.putFile(uri)
+            .continueWithTask { storageRef.downloadUrl }
+            .addOnSuccessListener { downloadUrl ->
+                val urlString = downloadUrl.toString()
+                db.collection("users").document(uid).update("photoUrl", urlString)
+
+                val profileUpdates = UserProfileChangeRequest.Builder()
+                    .setPhotoUri(downloadUrl)
+                    .build()
+                auth.currentUser?.updateProfile(profileUpdates)
+
+                profileAvatar.load(urlString) {
+                    crossfade(true)
+                }
+                Toast.makeText(this, "Profile picture updated! 📸", Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(this, "Failed to upload: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+            }
     }
 
     private fun loadUserProfile() {
@@ -217,6 +262,7 @@ class profile : AppCompatActivity() {
                         imageUrl = doc.getString("imageUrl") ?: "",
                         author = doc.getString("author") ?: "You",
                         authorId = uid,
+                        authorPhotoUrl = doc.getString("authorPhotoUrl") ?: (auth.currentUser?.photoUrl?.toString() ?: ""),
                         likesCount = doc.getLong("likesCount") ?: 0L,
                         commentsCount = doc.getLong("commentsCount") ?: 0L,
                         timestamp = doc.getLong("timestamp") ?: System.currentTimeMillis()
@@ -239,6 +285,58 @@ class profile : AppCompatActivity() {
         }
         adapter.notifyDataSetChanged()
         tvNoPosts.visibility = if (displayedList.isEmpty()) View.VISIBLE else View.GONE
+    }
+
+    private fun showBlogReaderDialog(blog: Blog) {
+        val dialog = BottomSheetDialog(this)
+        val view = layoutInflater.inflate(R.layout.dialog_blog_reader, null)
+        dialog.setContentView(view)
+
+        val ivCover = view.findViewById<ImageView>(R.id.ivReaderCover)
+        val tvCategory = view.findViewById<TextView>(R.id.tvReaderCategory)
+        val tvTitle = view.findViewById<TextView>(R.id.tvReaderTitle)
+        val ivAuthorAvatar = view.findViewById<ImageView>(R.id.ivReaderAuthorAvatar)
+        val tvAuthor = view.findViewById<TextView>(R.id.tvReaderAuthor)
+        val tvTime = view.findViewById<TextView>(R.id.tvReaderTime)
+        val tvContent = view.findViewById<TextView>(R.id.tvReaderContent)
+        val btnClose = view.findViewById<View>(R.id.btnReaderClose)
+
+        tvTitle.text = blog.title
+        tvContent.text = blog.content
+        tvCategory.text = blog.category
+        tvAuthor.text = blog.author
+
+        val relativeTime = android.text.format.DateUtils.getRelativeTimeSpanString(
+            blog.timestamp,
+            System.currentTimeMillis(),
+            android.text.format.DateUtils.MINUTE_IN_MILLIS
+        )
+        tvTime.text = relativeTime
+
+        if (blog.imageUrl.isNotEmpty()) {
+            ivCover.visibility = View.VISIBLE
+            ivCover.load(blog.imageUrl) {
+                crossfade(true)
+            }
+        } else {
+            ivCover.visibility = View.GONE
+        }
+
+        if (blog.authorPhotoUrl.isNotEmpty()) {
+            ivAuthorAvatar.load(blog.authorPhotoUrl) {
+                crossfade(true)
+                placeholder(R.drawable.bg_avatar_placeholder)
+                error(R.drawable.bg_avatar_placeholder)
+            }
+        } else {
+            ivAuthorAvatar.setImageResource(R.drawable.bg_avatar_placeholder)
+        }
+
+        btnClose.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialog.show()
     }
 
     private fun setupBottomNavigation() {
