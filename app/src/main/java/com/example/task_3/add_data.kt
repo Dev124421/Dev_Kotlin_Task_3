@@ -220,7 +220,7 @@ class add_data : AppCompatActivity() {
         btnPublish.isEnabled = false
         btnPublish.text = "Publishing..."
 
-        val postMap = hashMapOf(
+        val postMap = hashMapOf<String, Any>(
             "title" to title,
             "content" to content,
             "category" to selectedCategory,
@@ -248,6 +248,7 @@ class add_data : AppCompatActivity() {
             // Create new post
             postMap["likesCount"] = 0L
             postMap["commentsCount"] = 0L
+            postMap["likedBy"] = emptyList<String>()
 
             db.collection("blogs").add(postMap)
                 .addOnSuccessListener {

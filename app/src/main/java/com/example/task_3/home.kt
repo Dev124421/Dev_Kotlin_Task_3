@@ -98,7 +98,20 @@ class home : AppCompatActivity() {
                 if (uid != null) {
                     val docRef = db.collection("users").document(uid).collection("saved_posts").document(blog.id)
                     if (blog.isSaved) {
-                        docRef.set(mapOf("savedAt" to System.currentTimeMillis()))
+                        val savedData = hashMapOf(
+                            "title" to blog.title,
+                            "content" to blog.content,
+                            "category" to blog.category,
+                            "imageUrl" to blog.imageUrl,
+                            "author" to blog.author,
+                            "authorId" to blog.authorId,
+                            "authorPhotoUrl" to blog.authorPhotoUrl,
+                            "likesCount" to blog.likesCount,
+                            "commentsCount" to blog.commentsCount,
+                            "timestamp" to blog.timestamp,
+                            "savedAt" to System.currentTimeMillis()
+                        )
+                        docRef.set(savedData)
                     } else {
                         docRef.delete()
                     }
@@ -174,7 +187,10 @@ class home : AppCompatActivity() {
             .addOnSuccessListener { result ->
                 pbLoading.visibility = View.GONE
                 allBlogs.clear()
+                val currentUid = auth.currentUser?.uid ?: ""
                 for (doc in result) {
+                    val likedBy = (doc.get("likedBy") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+                    val isLiked = currentUid.isNotEmpty() && likedBy.contains(currentUid)
                     val blog = Blog(
                         id = doc.id,
                         title = doc.getString("title") ?: "",
@@ -184,15 +200,16 @@ class home : AppCompatActivity() {
                         author = doc.getString("author") ?: "Anonymous",
                         authorId = doc.getString("authorId") ?: doc.getString("uid") ?: "",
                         authorPhotoUrl = doc.getString("authorPhotoUrl") ?: "",
-                        likesCount = doc.getLong("likesCount") ?: 0L,
+                        likesCount = doc.getLong("likesCount") ?: likedBy.size.toLong(),
                         commentsCount = doc.getLong("commentsCount") ?: 0L,
-                        timestamp = doc.getLong("timestamp") ?: System.currentTimeMillis()
+                        timestamp = doc.getLong("timestamp") ?: System.currentTimeMillis(),
+                        likedBy = likedBy,
+                        isLiked = isLiked
                     )
                     allBlogs.add(blog)
                 }
 
-                val currentUid = auth.currentUser?.uid
-                if (currentUid != null) {
+                if (currentUid.isNotEmpty()) {
                     db.collection("users").document(currentUid).collection("saved_posts").get()
                         .addOnSuccessListener { savedSnap ->
                             val savedIds = savedSnap.documents.map { it.id }.toSet()
@@ -233,21 +250,47 @@ class home : AppCompatActivity() {
     }
 
     private fun handleLike(blog: Blog, position: Int) {
-        blog.isLiked = !blog.isLiked
-        val change = if (blog.isLiked) 1L else -1L
-        val newLikes = maxOf(0L, blog.likesCount + change)
+        val currentUid = auth.currentUser?.uid ?: return
+        val newIsLiked = !blog.isLiked
+        val updatedLikedBy = blog.likedBy.toMutableList()
+        val change: Long
 
-        // Update local object
-        allBlogs.find { it.id == blog.id }?.let {
-            it.isLiked = blog.isLiked
+        if (newIsLiked) {
+            if (!updatedLikedBy.contains(currentUid)) {
+                updatedLikedBy.add(currentUid)
+            }
+            change = 1L
+        } else {
+            updatedLikedBy.remove(currentUid)
+            change = -1L
         }
-        val updatedBlog = blog.copy(likesCount = newLikes, isLiked = blog.isLiked)
+
+        val newLikesCount = maxOf(0L, blog.likesCount + change)
+        val updatedBlog = blog.copy(
+            likesCount = newLikesCount,
+            likedBy = updatedLikedBy,
+            isLiked = newIsLiked
+        )
+
+        allBlogs.find { it.id == blog.id }?.let {
+            val idx = allBlogs.indexOf(it)
+            if (idx != -1) allBlogs[idx] = updatedBlog
+        }
         displayedBlogs[position] = updatedBlog
         adapter.notifyItemChanged(position)
 
-        // Update Firestore
-        db.collection("blogs").document(blog.id)
-            .update("likesCount", FieldValue.increment(change))
+        val docRef = db.collection("blogs").document(blog.id)
+        if (newIsLiked) {
+            docRef.update(
+                "likesCount", FieldValue.increment(1),
+                "likedBy", FieldValue.arrayUnion(currentUid)
+            )
+        } else {
+            docRef.update(
+                "likesCount", FieldValue.increment(-1),
+                "likedBy", FieldValue.arrayRemove(currentUid)
+            )
+        }
     }
 
     private fun handleEdit(blog: Blog) {

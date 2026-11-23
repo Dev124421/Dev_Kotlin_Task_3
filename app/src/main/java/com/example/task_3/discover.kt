@@ -17,6 +17,7 @@ import coil.load
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 
@@ -83,9 +84,7 @@ class discover : AppCompatActivity() {
             context = this,
             blogs = filteredBlogs,
             currentUserId = currentUid,
-            onLikeClick = { blog, _ ->
-                Toast.makeText(this, "Liked \"${blog.title}\"", Toast.LENGTH_SHORT).show()
-            },
+            onLikeClick = { blog, pos -> handleLike(blog, pos) },
             onCommentClick = { blog ->
                 Toast.makeText(this, "Comments for \"${blog.title}\"", Toast.LENGTH_SHORT).show()
             },
@@ -96,7 +95,20 @@ class discover : AppCompatActivity() {
                 if (uid != null) {
                     val docRef = db.collection("users").document(uid).collection("saved_posts").document(blog.id)
                     if (blog.isSaved) {
-                        docRef.set(mapOf("savedAt" to System.currentTimeMillis()))
+                        val savedData = hashMapOf(
+                            "title" to blog.title,
+                            "content" to blog.content,
+                            "category" to blog.category,
+                            "imageUrl" to blog.imageUrl,
+                            "author" to blog.author,
+                            "authorId" to blog.authorId,
+                            "authorPhotoUrl" to blog.authorPhotoUrl,
+                            "likesCount" to blog.likesCount,
+                            "commentsCount" to blog.commentsCount,
+                            "timestamp" to blog.timestamp,
+                            "savedAt" to System.currentTimeMillis()
+                        )
+                        docRef.set(savedData)
                     } else {
                         docRef.delete()
                     }
@@ -201,7 +213,10 @@ class discover : AppCompatActivity() {
             .get()
             .addOnSuccessListener { result ->
                 allBlogs.clear()
+                val currentUid = auth.currentUser?.uid ?: ""
                 for (doc in result) {
+                    val likedBy = (doc.get("likedBy") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+                    val isLiked = currentUid.isNotEmpty() && likedBy.contains(currentUid)
                     val blog = Blog(
                         id = doc.id,
                         title = doc.getString("title") ?: "",
@@ -211,14 +226,15 @@ class discover : AppCompatActivity() {
                         author = doc.getString("author") ?: "Anonymous",
                         authorId = doc.getString("authorId") ?: "",
                         authorPhotoUrl = doc.getString("authorPhotoUrl") ?: "",
-                        likesCount = doc.getLong("likesCount") ?: 0L,
+                        likesCount = doc.getLong("likesCount") ?: likedBy.size.toLong(),
                         commentsCount = doc.getLong("commentsCount") ?: 0L,
-                        timestamp = doc.getLong("timestamp") ?: System.currentTimeMillis()
+                        timestamp = doc.getLong("timestamp") ?: System.currentTimeMillis(),
+                        likedBy = likedBy,
+                        isLiked = isLiked
                     )
                     allBlogs.add(blog)
                 }
-                val currentUid = auth.currentUser?.uid
-                if (currentUid != null) {
+                if (currentUid.isNotEmpty()) {
                     db.collection("users").document(currentUid).collection("saved_posts")
                         .get()
                         .addOnSuccessListener { savedDocs ->
@@ -255,6 +271,50 @@ class discover : AppCompatActivity() {
                 }
                 applyFilters()
             }
+    }
+
+    private fun handleLike(blog: Blog, position: Int) {
+        val currentUid = auth.currentUser?.uid ?: return
+        val newIsLiked = !blog.isLiked
+        val updatedLikedBy = blog.likedBy.toMutableList()
+        val change: Long
+
+        if (newIsLiked) {
+            if (!updatedLikedBy.contains(currentUid)) {
+                updatedLikedBy.add(currentUid)
+            }
+            change = 1L
+        } else {
+            updatedLikedBy.remove(currentUid)
+            change = -1L
+        }
+
+        val newLikesCount = maxOf(0L, blog.likesCount + change)
+        val updatedBlog = blog.copy(
+            likesCount = newLikesCount,
+            likedBy = updatedLikedBy,
+            isLiked = newIsLiked
+        )
+
+        allBlogs.find { it.id == blog.id }?.let {
+            val idx = allBlogs.indexOf(it)
+            if (idx != -1) allBlogs[idx] = updatedBlog
+        }
+        filteredBlogs[position] = updatedBlog
+        blogsAdapter.notifyItemChanged(position)
+
+        val docRef = db.collection("blogs").document(blog.id)
+        if (newIsLiked) {
+            docRef.update(
+                "likesCount", FieldValue.increment(1),
+                "likedBy", FieldValue.arrayUnion(currentUid)
+            )
+        } else {
+            docRef.update(
+                "likesCount", FieldValue.increment(-1),
+                "likedBy", FieldValue.arrayRemove(currentUid)
+            )
+        }
     }
 
     private fun applyFilters() {

@@ -12,6 +12,7 @@ data class Blog(
     val likesCount: Long = 0,
     val commentsCount: Long = 0,
     val timestamp: Long = System.currentTimeMillis(),
+    val likedBy: List<String> = emptyList(),
     var isLiked: Boolean = false,
     var isSaved: Boolean = false
 )
