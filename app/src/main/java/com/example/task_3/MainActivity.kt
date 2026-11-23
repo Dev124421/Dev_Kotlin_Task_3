@@ -110,13 +110,22 @@ class MainActivity : AppCompatActivity() {
                         "bio" to "Storyteller & Creator",
                         "postsCount" to 0
                     )
+                    binding.SignUpBtn.text = "Setting up profile..."
                     db.collection("users").document(uid).set(userData)
-
-                    Toast.makeText(this, "Welcome to Inkora!", Toast.LENGTH_SHORT).show()
-                    val intent = Intent(this, home::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    startActivity(intent)
-                    finish()
+                        .addOnSuccessListener {
+                            Toast.makeText(this, "Welcome to Inkora!", Toast.LENGTH_SHORT).show()
+                            val intent = Intent(this, home::class.java)
+                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                            startActivity(intent)
+                            finish()
+                        }
+                        .addOnFailureListener { e ->
+                            Toast.makeText(this, "Firestore error: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                            val intent = Intent(this, home::class.java)
+                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                            startActivity(intent)
+                            finish()
+                        }
                 } else {
                     Toast.makeText(this, task.exception?.localizedMessage ?: "Sign up failed", Toast.LENGTH_LONG).show()
                 }

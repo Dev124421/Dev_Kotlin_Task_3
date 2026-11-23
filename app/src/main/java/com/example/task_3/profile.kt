@@ -18,6 +18,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.storage.FirebaseStorage
 
 class profile : AppCompatActivity() {
@@ -195,7 +196,7 @@ class profile : AppCompatActivity() {
             .continueWithTask { storageRef.downloadUrl }
             .addOnSuccessListener { downloadUrl ->
                 val urlString = downloadUrl.toString()
-                db.collection("users").document(uid).update("photoUrl", urlString)
+                db.collection("users").document(uid).set(mapOf("photoUrl" to urlString), SetOptions.merge())
 
                 val profileUpdates = UserProfileChangeRequest.Builder()
                     .setPhotoUri(downloadUrl)

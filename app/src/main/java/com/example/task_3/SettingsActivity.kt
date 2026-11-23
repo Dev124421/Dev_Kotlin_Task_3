@@ -17,6 +17,7 @@ import coil.load
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.storage.FirebaseStorage
 
 class SettingsActivity : AppCompatActivity() {
@@ -150,7 +151,7 @@ class SettingsActivity : AppCompatActivity() {
 
                     // Save to Firestore and Auth profile
                     db.collection("users").document(uid)
-                        .update("photoUrl", urlString)
+                        .set(mapOf("photoUrl" to urlString), SetOptions.merge())
                         .addOnCompleteListener {
                             pbPfpUpload.visibility = View.GONE
                             btnChangePfp.isEnabled = true
@@ -200,7 +201,7 @@ class SettingsActivity : AppCompatActivity() {
         )
 
         db.collection("users").document(uid)
-            .update(updates)
+            .set(updates, SetOptions.merge())
             .addOnSuccessListener {
                 btnSaveProfile.isEnabled = true
                 btnSaveProfile.text = "Save Changes  ✓"
