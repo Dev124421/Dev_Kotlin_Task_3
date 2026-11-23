@@ -68,67 +68,117 @@ class MainActivity : AppCompatActivity() {
 
     private fun registerUser() {
         val name = binding.signupfullname.text.toString().trim()
+        val rawUsername = binding.signupusername.text.toString().trim()
+        val cleanUsername = rawUsername.lowercase().removePrefix("@").replace(" ", "_")
         val email = binding.signupemail.text.toString().trim()
         val password = binding.signuppassword.text.toString().trim()
         val confirmPassword = binding.confirmpassword.text.toString().trim()
 
-        if (name.isEmpty() || email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
-            Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show()
+        if (name.isEmpty()) {
+            binding.signupfullname.error = "Please enter your name"
+            binding.signupfullname.requestFocus()
+            return
+        }
+
+        if (cleanUsername.isEmpty()) {
+            binding.signupusername.error = "Please choose a username"
+            binding.signupusername.requestFocus()
+            return
+        }
+
+        if (cleanUsername.length < 3) {
+            binding.signupusername.error = "Username must be at least 3 characters"
+            binding.signupusername.requestFocus()
+            return
+        }
+
+        if (!cleanUsername.matches(Regex("^[a-zA-Z0-9_.]+$"))) {
+            binding.signupusername.error = "Usernames can only contain letters, numbers, _, and ."
+            binding.signupusername.requestFocus()
+            return
+        }
+
+        if (email.isEmpty()) {
+            binding.signupemail.error = "Please enter your email"
+            binding.signupemail.requestFocus()
             return
         }
 
         if (password.length < 6) {
-            Toast.makeText(this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show()
+            binding.signuppassword.error = "Password must be at least 6 characters"
+            binding.signuppassword.requestFocus()
             return
         }
 
         if (password != confirmPassword) {
-            Toast.makeText(this, "Passwords do not match", Toast.LENGTH_SHORT).show()
+            binding.confirmpassword.error = "Passwords do not match"
+            binding.confirmpassword.requestFocus()
             return
         }
 
         binding.SignUpBtn.isEnabled = false
-        binding.SignUpBtn.text = "Creating account..."
+        binding.SignUpBtn.text = "Checking username..."
 
-        auth.createUserWithEmailAndPassword(email, password)
-            .addOnCompleteListener { task ->
+        // Check if username already exists in Firestore
+        db.collection("users")
+            .whereEqualTo("username", cleanUsername)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                if (!snapshot.isEmpty) {
+                    binding.SignUpBtn.isEnabled = true
+                    binding.SignUpBtn.text = "Sign Up  →"
+                    binding.signupusername.error = "Username '$cleanUsername' is already taken! Please choose a unique one."
+                    binding.signupusername.requestFocus()
+                    Toast.makeText(this, "Username already exists! Please choose another one.", Toast.LENGTH_SHORT).show()
+                } else {
+                    // Username is unique! Proceed with account creation
+                    binding.SignUpBtn.text = "Creating account..."
+                    auth.createUserWithEmailAndPassword(email, password)
+                        .addOnCompleteListener { task ->
+                            binding.SignUpBtn.isEnabled = true
+                            binding.SignUpBtn.text = "Sign Up  →"
+
+                            if (task.isSuccessful) {
+                                val uid = auth.currentUser?.uid ?: ""
+                                val profileUpdates = com.google.firebase.auth.UserProfileChangeRequest.Builder()
+                                    .setDisplayName(name)
+                                    .build()
+                                auth.currentUser?.updateProfile(profileUpdates)
+
+                                val userData = hashMapOf(
+                                    "uid" to uid,
+                                    "name" to name,
+                                    "username" to cleanUsername,
+                                    "email" to email,
+                                    "bio" to "Storyteller & Creator",
+                                    "postsCount" to 0
+                                )
+                                binding.SignUpBtn.text = "Setting up profile..."
+                                db.collection("users").document(uid).set(userData)
+                                    .addOnSuccessListener {
+                                        Toast.makeText(this, "Welcome to Inkora!", Toast.LENGTH_SHORT).show()
+                                        val intent = Intent(this, userdetails::class.java)
+                                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                                        startActivity(intent)
+                                        finish()
+                                    }
+                                    .addOnFailureListener { e ->
+                                        Toast.makeText(this, "Firestore error: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                                        val intent = Intent(this, userdetails::class.java)
+                                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                                        startActivity(intent)
+                                        finish()
+                                    }
+                            } else {
+                                Toast.makeText(this, task.exception?.localizedMessage ?: "Sign up failed", Toast.LENGTH_LONG).show()
+                            }
+                        }
+                }
+            }
+            .addOnFailureListener { e ->
                 binding.SignUpBtn.isEnabled = true
                 binding.SignUpBtn.text = "Sign Up  →"
-
-                if (task.isSuccessful) {
-                    val uid = auth.currentUser?.uid ?: ""
-                    val profileUpdates = com.google.firebase.auth.UserProfileChangeRequest.Builder()
-                        .setDisplayName(name)
-                        .build()
-                    auth.currentUser?.updateProfile(profileUpdates)
-
-                    val userData = hashMapOf(
-                        "uid" to uid,
-                        "name" to name,
-                        "username" to name.lowercase().replace(" ", "_"),
-                        "email" to email,
-                        "bio" to "Storyteller & Creator",
-                        "postsCount" to 0
-                    )
-                    binding.SignUpBtn.text = "Setting up profile..."
-                    db.collection("users").document(uid).set(userData)
-                        .addOnSuccessListener {
-                            Toast.makeText(this, "Welcome to Inkora!", Toast.LENGTH_SHORT).show()
-                            val intent = Intent(this, home::class.java)
-                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                            startActivity(intent)
-                            finish()
-                        }
-                        .addOnFailureListener { e ->
-                            Toast.makeText(this, "Firestore error: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
-                            val intent = Intent(this, home::class.java)
-                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                            startActivity(intent)
-                            finish()
-                        }
-                } else {
-                    Toast.makeText(this, task.exception?.localizedMessage ?: "Sign up failed", Toast.LENGTH_LONG).show()
-                }
+                Toast.makeText(this, "Error checking username: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
             }
     }
 }

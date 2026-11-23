@@ -174,6 +174,7 @@ class profile : AppCompatActivity() {
             }
         )
         rvProfileBlogs.layoutManager = LinearLayoutManager(this)
+        rvProfileBlogs.isNestedScrollingEnabled = false
         rvProfileBlogs.adapter = adapter
     }
 
@@ -186,6 +187,8 @@ class profile : AppCompatActivity() {
                 tvTabSaved.setTextColor(getColor(R.color.secondary_text))
                 indicatorSaved.setBackgroundColor(getColor(android.R.color.transparent))
                 updateDisplayedList()
+            } else {
+                loadUserBlogs()
             }
         }
 
@@ -198,6 +201,8 @@ class profile : AppCompatActivity() {
                 indicatorBlogs.setBackgroundColor(getColor(android.R.color.transparent))
                 loadSavedBlogs()
                 updateDisplayedList()
+            } else {
+                loadSavedBlogs()
             }
         }
     }
@@ -345,6 +350,7 @@ class profile : AppCompatActivity() {
                     }
                 }
 
+                savedBlogsList.sortByDescending { it.timestamp }
                 if (isSavedTab) updateDisplayedList()
 
                 // Fetch any legacy bookmarks from blogs collection
@@ -371,6 +377,7 @@ class profile : AppCompatActivity() {
                             )
                             if (savedBlogsList.none { it.id == blog.id }) {
                                 savedBlogsList.add(blog)
+                                savedBlogsList.sortByDescending { it.timestamp }
                                 if (isSavedTab) updateDisplayedList()
                             }
                         }
@@ -440,7 +447,9 @@ class profile : AppCompatActivity() {
             tvNoPosts.text = "You haven't written any blogs yet."
         }
         adapter.notifyDataSetChanged()
-        tvNoPosts.visibility = if (displayedList.isEmpty()) View.VISIBLE else View.GONE
+        val isEmpty = displayedList.isEmpty()
+        tvNoPosts.visibility = if (isEmpty) View.VISIBLE else View.GONE
+        rvProfileBlogs.visibility = if (isEmpty) View.GONE else View.VISIBLE
     }
 
     private fun showBlogReaderDialog(blog: Blog) {

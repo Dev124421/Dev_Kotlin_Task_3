@@ -176,7 +176,8 @@ class SettingsActivity : AppCompatActivity() {
         val uid = auth.currentUser?.uid ?: return
 
         val name = etSettingsName.text.toString().trim()
-        val username = etSettingsUsername.text.toString().trim().lowercase().replace(" ", "_")
+        val rawUsername = etSettingsUsername.text.toString().trim()
+        val cleanUsername = rawUsername.lowercase().removePrefix("@").replace(" ", "_")
         val bio = etSettingsBio.text.toString().trim()
         val age = etSettingsAge.text.toString().trim()
         val gender = etSettingsGender.text.toString().trim()
@@ -188,37 +189,75 @@ class SettingsActivity : AppCompatActivity() {
             return
         }
 
+        if (cleanUsername.isEmpty()) {
+            etSettingsUsername.error = "Username cannot be empty"
+            etSettingsUsername.requestFocus()
+            return
+        }
+
+        if (cleanUsername.length < 3) {
+            etSettingsUsername.error = "Username must be at least 3 characters"
+            etSettingsUsername.requestFocus()
+            return
+        }
+
+        if (!cleanUsername.matches(Regex("^[a-zA-Z0-9_.]+$"))) {
+            etSettingsUsername.error = "Usernames can only contain letters, numbers, _, and ."
+            etSettingsUsername.requestFocus()
+            return
+        }
+
         btnSaveProfile.isEnabled = false
-        btnSaveProfile.text = "Saving..."
+        btnSaveProfile.text = "Checking username..."
 
-        val updates = hashMapOf<String, Any>(
-            "name" to name,
-            "username" to username,
-            "bio" to bio,
-            "age" to age,
-            "gender" to gender,
-            "address" to address
-        )
+        // Check if username already exists in Firestore for another user
+        db.collection("users")
+            .whereEqualTo("username", cleanUsername)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val isTakenByOther = snapshot.documents.any { it.id != uid }
+                if (isTakenByOther) {
+                    btnSaveProfile.isEnabled = true
+                    btnSaveProfile.text = "Save Changes  ✓"
+                    etSettingsUsername.error = "Username '$cleanUsername' is already taken! Choose a unique one."
+                    etSettingsUsername.requestFocus()
+                    Toast.makeText(this, "Username '$cleanUsername' is already taken! Please choose another.", Toast.LENGTH_SHORT).show()
+                } else {
+                    val updates = hashMapOf<String, Any>(
+                        "name" to name,
+                        "username" to cleanUsername,
+                        "bio" to bio,
+                        "age" to age,
+                        "gender" to gender,
+                        "address" to address
+                    )
 
-        db.collection("users").document(uid)
-            .set(updates, SetOptions.merge())
-            .addOnSuccessListener {
-                btnSaveProfile.isEnabled = true
-                btnSaveProfile.text = "Save Changes  ✓"
+                    db.collection("users").document(uid)
+                        .set(updates, SetOptions.merge())
+                        .addOnSuccessListener {
+                            btnSaveProfile.isEnabled = true
+                            btnSaveProfile.text = "Save Changes  ✓"
 
-                // Update display name in Firebase Auth
-                val profileUpdates = UserProfileChangeRequest.Builder()
-                    .setDisplayName(name)
-                    .build()
-                auth.currentUser?.updateProfile(profileUpdates)
+                            // Update display name in Firebase Auth
+                            val profileUpdates = UserProfileChangeRequest.Builder()
+                                .setDisplayName(name)
+                                .build()
+                            auth.currentUser?.updateProfile(profileUpdates)
 
-                Toast.makeText(this, "Account settings saved!", Toast.LENGTH_SHORT).show()
-                finish()
+                            Toast.makeText(this, "Account settings saved!", Toast.LENGTH_SHORT).show()
+                            finish()
+                        }
+                        .addOnFailureListener { e ->
+                            btnSaveProfile.isEnabled = true
+                            btnSaveProfile.text = "Save Changes  ✓"
+                            Toast.makeText(this, "Error saving: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                        }
+                }
             }
             .addOnFailureListener { e ->
                 btnSaveProfile.isEnabled = true
                 btnSaveProfile.text = "Save Changes  ✓"
-                Toast.makeText(this, "Error saving: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Error checking username: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
             }
     }
 
