@@ -99,6 +99,7 @@ class profile : AppCompatActivity() {
 
         loadUserProfile()
         loadUserBlogs()
+        loadSavedBlogs()
     }
 
     override fun onResume() {
@@ -106,6 +107,7 @@ class profile : AppCompatActivity() {
         bottomNav.selectedItemId = R.id.nav_account
         loadUserProfile()
         loadUserBlogs()
+        loadSavedBlogs()
     }
 
     private fun setupRecyclerView() {
@@ -121,6 +123,21 @@ class profile : AppCompatActivity() {
             onSaveClick = { blog, pos ->
                 blog.isSaved = !blog.isSaved
                 adapter.notifyItemChanged(pos)
+                val uid = auth.currentUser?.uid
+                if (uid != null) {
+                    val docRef = db.collection("users").document(uid).collection("saved_posts").document(blog.id)
+                    if (blog.isSaved) {
+                        docRef.set(mapOf("savedAt" to System.currentTimeMillis()))
+                    } else {
+                        docRef.delete()
+                    }
+                }
+                val msg = if (blog.isSaved) "Saved to bookmarks" else "Removed from bookmarks"
+                Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+                if (isSavedTab && !blog.isSaved) {
+                    savedBlogsList.removeAll { it.id == blog.id }
+                    updateDisplayedList()
+                }
             },
             onEditClick = { blog ->
                 val intent = Intent(this, add_data::class.java).apply {
@@ -272,6 +289,44 @@ class profile : AppCompatActivity() {
                 }
                 postsCountText.text = userBlogsList.size.toString()
                 updateDisplayedList()
+            }
+    }
+
+    private fun loadSavedBlogs() {
+        val uid = auth.currentUser?.uid ?: return
+        db.collection("users").document(uid).collection("saved_posts").get()
+            .addOnSuccessListener { snap ->
+                savedBlogsList.clear()
+                val savedIds = snap.documents.map { it.id }
+                if (savedIds.isEmpty()) {
+                    if (isSavedTab) updateDisplayedList()
+                    return@addOnSuccessListener
+                }
+                for (id in savedIds) {
+                    db.collection("blogs").document(id).get()
+                        .addOnSuccessListener { doc ->
+                            if (doc.exists()) {
+                                val blog = Blog(
+                                    id = doc.id,
+                                    title = doc.getString("title") ?: "",
+                                    content = doc.getString("content") ?: "",
+                                    category = doc.getString("category") ?: "Tech",
+                                    imageUrl = doc.getString("imageUrl") ?: "",
+                                    author = doc.getString("author") ?: "Creator",
+                                    authorId = doc.getString("authorId") ?: "",
+                                    authorPhotoUrl = doc.getString("authorPhotoUrl") ?: "",
+                                    likesCount = doc.getLong("likesCount") ?: 0L,
+                                    commentsCount = doc.getLong("commentsCount") ?: 0L,
+                                    timestamp = doc.getLong("timestamp") ?: System.currentTimeMillis(),
+                                    isSaved = true
+                                )
+                                if (savedBlogsList.none { it.id == blog.id }) {
+                                    savedBlogsList.add(blog)
+                                    if (isSavedTab) updateDisplayedList()
+                                }
+                            }
+                        }
+                }
             }
     }
 

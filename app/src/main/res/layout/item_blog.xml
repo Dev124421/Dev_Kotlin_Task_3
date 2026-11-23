@@ -216,12 +216,12 @@
             android:orientation="horizontal"
             android:paddingVertical="4dp">
 
-            <TextView
-                android:id="@+id/tvSaveIcon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="🔖"
-                android:textSize="13sp" />
+            <ImageView
+                android:id="@+id/ivSaveIcon"
+                android:layout_width="15dp"
+                android:layout_height="15dp"
+                android:src="@drawable/save"
+                app:tint="@color/white" />
 
             <TextView
                 android:id="@+id/tvSaveText"

@@ -94,6 +94,15 @@ class home : AppCompatActivity() {
             onSaveClick = { blog, pos ->
                 blog.isSaved = !blog.isSaved
                 adapter.notifyItemChanged(pos)
+                val uid = auth.currentUser?.uid
+                if (uid != null) {
+                    val docRef = db.collection("users").document(uid).collection("saved_posts").document(blog.id)
+                    if (blog.isSaved) {
+                        docRef.set(mapOf("savedAt" to System.currentTimeMillis()))
+                    } else {
+                        docRef.delete()
+                    }
+                }
                 val msg = if (blog.isSaved) "Saved to bookmarks" else "Removed from bookmarks"
                 Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
             },
@@ -181,7 +190,21 @@ class home : AppCompatActivity() {
                     )
                     allBlogs.add(blog)
                 }
-                filterAndDisplayBlogs()
+
+                val currentUid = auth.currentUser?.uid
+                if (currentUid != null) {
+                    db.collection("users").document(currentUid).collection("saved_posts").get()
+                        .addOnSuccessListener { savedSnap ->
+                            val savedIds = savedSnap.documents.map { it.id }.toSet()
+                            allBlogs.forEach { it.isSaved = it.id in savedIds }
+                            filterAndDisplayBlogs()
+                        }
+                        .addOnFailureListener {
+                            filterAndDisplayBlogs()
+                        }
+                } else {
+                    filterAndDisplayBlogs()
+                }
             }
             .addOnFailureListener {
                 pbLoading.visibility = View.GONE

@@ -38,7 +38,7 @@ class BlogRecyclerAdapter(
         val layoutComment: View = view.findViewById(R.id.layoutComment)
         val tvCommentsCount: TextView = view.findViewById(R.id.tvCommentsCount)
         val layoutSave: View = view.findViewById(R.id.layoutSave)
-        val tvSaveIcon: TextView = view.findViewById(R.id.tvSaveIcon)
+        val ivSaveIcon: ImageView = view.findViewById(R.id.ivSaveIcon)
         val tvSaveText: TextView = view.findViewById(R.id.tvSaveText)
         val btnEdit: View = view.findViewById(R.id.btnEdit)
         val btnDelete: View = view.findViewById(R.id.btnDelete)
@@ -101,14 +101,15 @@ class BlogRecyclerAdapter(
         holder.tvCommentsCount.text = blog.commentsCount.toString()
 
         // Saves
+        holder.ivSaveIcon.setImageResource(R.drawable.save)
         if (blog.isSaved) {
-            holder.tvSaveIcon.text = "🏷️"
+            holder.ivSaveIcon.setColorFilter(context.getColor(R.color.primary_red))
             holder.tvSaveText.text = "Saved"
             holder.tvSaveText.setTextColor(context.getColor(R.color.primary_red))
         } else {
-            holder.tvSaveIcon.text = "🔖"
+            holder.ivSaveIcon.setColorFilter(context.getColor(R.color.white))
             holder.tvSaveText.text = "Save"
-            holder.tvSaveText.setTextColor(context.getColor(R.color.secondary_text))
+            holder.tvSaveText.setTextColor(context.getColor(R.color.white))
         }
 
         // Author buttons

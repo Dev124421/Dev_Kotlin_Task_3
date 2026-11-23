@@ -92,7 +92,16 @@ class discover : AppCompatActivity() {
             onSaveClick = { blog, pos ->
                 blog.isSaved = !blog.isSaved
                 blogsAdapter.notifyItemChanged(pos)
-                Toast.makeText(this, if (blog.isSaved) "Saved" else "Removed", Toast.LENGTH_SHORT).show()
+                val uid = auth.currentUser?.uid
+                if (uid != null) {
+                    val docRef = db.collection("users").document(uid).collection("saved_posts").document(blog.id)
+                    if (blog.isSaved) {
+                        docRef.set(mapOf("savedAt" to System.currentTimeMillis()))
+                    } else {
+                        docRef.delete()
+                    }
+                }
+                Toast.makeText(this, if (blog.isSaved) "Saved to bookmarks" else "Removed from bookmarks", Toast.LENGTH_SHORT).show()
             },
             onEditClick = {},
             onDeleteClick = {},
@@ -208,7 +217,23 @@ class discover : AppCompatActivity() {
                     )
                     allBlogs.add(blog)
                 }
-                applyFilters()
+                val currentUid = auth.currentUser?.uid
+                if (currentUid != null) {
+                    db.collection("users").document(currentUid).collection("saved_posts")
+                        .get()
+                        .addOnSuccessListener { savedDocs ->
+                            val savedIds = savedDocs.documents.map { it.id }.toSet()
+                            for (b in allBlogs) {
+                                b.isSaved = savedIds.contains(b.id)
+                            }
+                            applyFilters()
+                        }
+                        .addOnFailureListener {
+                            applyFilters()
+                        }
+                } else {
+                    applyFilters()
+                }
             }
 
         // Load users
