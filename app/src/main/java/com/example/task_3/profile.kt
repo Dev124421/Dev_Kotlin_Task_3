@@ -60,6 +60,7 @@ class profile : AppCompatActivity() {
     private val userBlogsList = mutableListOf<Blog>()
     private val savedBlogsList = mutableListOf<Blog>()
     private val displayedList = mutableListOf<Blog>()
+    private val followedAuthorIds = mutableSetOf<String>()
     private lateinit var adapter: BlogRecyclerAdapter
 
     private var isSavedTab = false
@@ -117,6 +118,10 @@ class profile : AppCompatActivity() {
             context = this,
             blogs = displayedList,
             currentUserId = currentUid,
+            followedUserIds = followedAuthorIds,
+            onFollowClick = { blog, _ ->
+                handleFollowToggle(blog.authorId, blog.author)
+            },
             onLikeClick = { blog, pos -> handleLike(blog, pos) },
             onCommentClick = {},
             onSaveClick = { blog, pos ->
@@ -278,6 +283,16 @@ class profile : AppCompatActivity() {
                     nameText.text = auth.currentUser?.displayName ?: "Inkora User"
                     userHandleText.text = "@${auth.currentUser?.email?.substringBefore("@") ?: "user"}"
                 }
+
+                // Load following IDs
+                db.collection("users").document(uid).collection("following").get()
+                    .addOnSuccessListener { followingSnap ->
+                        followedAuthorIds.clear()
+                        for (fDoc in followingSnap.documents) {
+                            followedAuthorIds.add(fDoc.id)
+                        }
+                        adapter.updateFollowedUsers(followedAuthorIds)
+                    }
             }
     }
 
@@ -452,6 +467,55 @@ class profile : AppCompatActivity() {
         rvProfileBlogs.visibility = if (isEmpty) View.GONE else View.VISIBLE
     }
 
+    private fun handleFollowToggle(authorId: String, authorName: String, onDone: (() -> Unit)? = null) {
+        val currentUid = auth.currentUser?.uid ?: return
+        if (authorId.isEmpty() || authorId == currentUid) return
+
+        val isCurrentlyFollowed = followedAuthorIds.contains(authorId)
+        val batch = db.batch()
+
+        val currentFollowingRef = db.collection("users").document(currentUid).collection("following").document(authorId)
+        val authorFollowerRef = db.collection("users").document(authorId).collection("followers").document(currentUid)
+        val currentUserRef = db.collection("users").document(currentUid)
+        val authorUserRef = db.collection("users").document(authorId)
+
+        if (isCurrentlyFollowed) {
+            batch.delete(currentFollowingRef)
+            batch.delete(authorFollowerRef)
+            batch.set(currentUserRef, mapOf("followingCount" to FieldValue.increment(-1)), SetOptions.merge())
+            batch.set(authorUserRef, mapOf("followersCount" to FieldValue.increment(-1)), SetOptions.merge())
+            followedAuthorIds.remove(authorId)
+        } else {
+            val followData = hashMapOf("followedAt" to System.currentTimeMillis())
+            batch.set(currentFollowingRef, followData)
+            batch.set(authorFollowerRef, followData)
+            batch.set(currentUserRef, mapOf("followingCount" to FieldValue.increment(1)), SetOptions.merge())
+            batch.set(authorUserRef, mapOf("followersCount" to FieldValue.increment(1)), SetOptions.merge())
+            followedAuthorIds.add(authorId)
+        }
+
+        adapter.updateFollowedUsers(followedAuthorIds)
+        // Refresh following count locally
+        val currentFollowing = followingCountText.text.toString().toLongOrNull() ?: 0L
+        followingCountText.text = maxOf(0L, if (isCurrentlyFollowed) currentFollowing - 1 else currentFollowing + 1).toString()
+        onDone?.invoke()
+
+        val msg = if (isCurrentlyFollowed) "Unfollowed $authorName" else "Following $authorName"
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+
+        batch.commit().addOnFailureListener { e ->
+            if (isCurrentlyFollowed) {
+                followedAuthorIds.add(authorId)
+            } else {
+                followedAuthorIds.remove(authorId)
+            }
+            adapter.updateFollowedUsers(followedAuthorIds)
+            loadUserProfile()
+            onDone?.invoke()
+            Toast.makeText(this, "Failed to update follow: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     private fun showBlogReaderDialog(blog: Blog) {
         val dialog = BottomSheetDialog(this)
         val view = layoutInflater.inflate(R.layout.dialog_blog_reader, null)
@@ -464,12 +528,40 @@ class profile : AppCompatActivity() {
         val tvAuthor = view.findViewById<TextView>(R.id.tvReaderAuthor)
         val tvTime = view.findViewById<TextView>(R.id.tvReaderTime)
         val tvContent = view.findViewById<TextView>(R.id.tvReaderContent)
+        val btnReaderFollow = view.findViewById<Button>(R.id.btnReaderFollow)
         val btnClose = view.findViewById<View>(R.id.btnReaderClose)
 
         tvTitle.text = blog.title
         tvContent.text = blog.content
         tvCategory.text = blog.category
         tvAuthor.text = blog.author
+
+        val currentUid = auth.currentUser?.uid ?: ""
+        val isOwnPost = currentUid.isNotEmpty() && blog.authorId == currentUid
+        if (isOwnPost || blog.authorId.isEmpty()) {
+            btnReaderFollow.visibility = View.GONE
+        } else {
+            btnReaderFollow.visibility = View.VISIBLE
+            fun updateReaderFollowButton() {
+                val isFollowed = followedAuthorIds.contains(blog.authorId)
+                if (isFollowed) {
+                    btnReaderFollow.text = "Followed"
+                    btnReaderFollow.setBackgroundResource(R.drawable.bg_pill_filter_unselected)
+                    btnReaderFollow.setTextColor(getColor(R.color.secondary_text))
+                } else {
+                    btnReaderFollow.text = "+ Follow"
+                    btnReaderFollow.setBackgroundResource(R.drawable.bg_primary_button)
+                    btnReaderFollow.setTextColor(getColor(R.color.white))
+                }
+            }
+            updateReaderFollowButton()
+            btnReaderFollow.setOnClickListener {
+                handleFollowToggle(blog.authorId, blog.author) {
+                    updateReaderFollowButton()
+                }
+                updateReaderFollowButton()
+            }
+        }
 
         val relativeTime = android.text.format.DateUtils.getRelativeTimeSpanString(
             blog.timestamp,

@@ -5,6 +5,7 @@ import android.text.format.DateUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.widget.PopupMenu
@@ -15,6 +16,8 @@ class BlogRecyclerAdapter(
     private val context: Context,
     private val blogs: MutableList<Blog>,
     private val currentUserId: String,
+    private var followedUserIds: Set<String> = emptySet(),
+    private val onFollowClick: ((Blog, Int) -> Unit)? = null,
     private val onLikeClick: (Blog, Int) -> Unit,
     private val onCommentClick: (Blog) -> Unit,
     private val onSaveClick: (Blog, Int) -> Unit,
@@ -23,10 +26,16 @@ class BlogRecyclerAdapter(
     private val onBlogClick: (Blog) -> Unit
 ) : RecyclerView.Adapter<BlogRecyclerAdapter.BlogViewHolder>() {
 
+    fun updateFollowedUsers(newSet: Set<String>) {
+        followedUserIds = newSet
+        notifyDataSetChanged()
+    }
+
     class BlogViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val tvAuthor: TextView = view.findViewById(R.id.tvBlogAuthor)
         val ivAuthorAvatar: ImageView = view.findViewById(R.id.ivBlogAuthorAvatar)
         val tvTime: TextView = view.findViewById(R.id.tvBlogTime)
+        val btnFollowAuthor: Button = view.findViewById(R.id.btnFollowAuthor)
         val tvCategory: TextView = view.findViewById(R.id.tvBlogCategory)
         val tvTitle: TextView = view.findViewById(R.id.tvBlogTitle)
         val tvContent: TextView = view.findViewById(R.id.tvBlogContent)
@@ -74,6 +83,27 @@ class BlogRecyclerAdapter(
             DateUtils.MINUTE_IN_MILLIS
         )
         holder.tvTime.text = relativeTime
+
+        // Follow Author Button
+        val isOwnPost = currentUserId.isNotEmpty() && blog.authorId == currentUserId
+        if (isOwnPost || blog.authorId.isEmpty() || onFollowClick == null) {
+            holder.btnFollowAuthor.visibility = View.GONE
+        } else {
+            holder.btnFollowAuthor.visibility = View.VISIBLE
+            val isFollowed = followedUserIds.contains(blog.authorId)
+            if (isFollowed) {
+                holder.btnFollowAuthor.text = "Followed"
+                holder.btnFollowAuthor.setBackgroundResource(R.drawable.bg_pill_filter_unselected)
+                holder.btnFollowAuthor.setTextColor(context.getColor(R.color.secondary_text))
+            } else {
+                holder.btnFollowAuthor.text = "+ Follow"
+                holder.btnFollowAuthor.setBackgroundResource(R.drawable.bg_primary_button)
+                holder.btnFollowAuthor.setTextColor(context.getColor(R.color.white))
+            }
+            holder.btnFollowAuthor.setOnClickListener {
+                onFollowClick.invoke(blog, position)
+            }
+        }
 
         // Cover Image with Coil
         if (blog.imageUrl.isNotEmpty()) {

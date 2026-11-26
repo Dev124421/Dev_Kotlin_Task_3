@@ -21,20 +21,13 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <TextView
-            android:id="@+id/btnMenu"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="☰"
-            android:textColor="@color/primary_text"
-            android:textSize="22sp" />
-
-        <TextView
             android:id="@+id/tvBrandTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="center"
             android:text="Inkora"
+            android:layout_marginLeft="50dp"
             android:textColor="@color/primary_text"
             android:textSize="20sp"
             android:textStyle="bold" />

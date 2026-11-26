@@ -117,6 +117,22 @@
                             android:textColor="@color/secondary_text"
                             android:textSize="12sp" />
                     </LinearLayout>
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/btnReaderFollow"
+                        android:layout_width="wrap_content"
+                        android:layout_height="32dp"
+                        android:minHeight="0dp"
+                        android:minWidth="0dp"
+                        android:paddingHorizontal="14dp"
+                        android:paddingVertical="0dp"
+                        android:background="@drawable/bg_primary_button"
+                        android:text="+ Follow"
+                        android:textAllCaps="false"
+                        android:textColor="@color/white"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:visibility="gone" />
                 </LinearLayout>
 
                 <View
