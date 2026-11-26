@@ -38,16 +38,6 @@ class home : AppCompatActivity() {
     private lateinit var tvEmpty: TextView
     private lateinit var bottomNav: BottomNavigationView
 
-    private lateinit var tabForYou: View
-    private lateinit var tabFollowing: View
-    private lateinit var tvTabForYou: TextView
-    private lateinit var tvTabFollowing: TextView
-    private lateinit var indicatorForYou: View
-    private lateinit var indicatorFollowing: View
-
-    private var isFollowingTab = false
-    private var selectedCategory = "All"
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
@@ -58,18 +48,9 @@ class home : AppCompatActivity() {
         tvEmpty = findViewById(R.id.tvEmptyFeed)
         bottomNav = findViewById(R.id.bottom_nav)
 
-        tabForYou = findViewById(R.id.tabForYou)
-        tabFollowing = findViewById(R.id.tabFollowing)
-        tvTabForYou = findViewById(R.id.tvTabForYou)
-        tvTabFollowing = findViewById(R.id.tvTabFollowing)
-        indicatorForYou = findViewById(R.id.indicatorForYou)
-        indicatorFollowing = findViewById(R.id.indicatorFollowing)
-
         bottomNav.selectedItemId = R.id.nav_home
 
         setupRecyclerView()
-        setupTabs()
-        setupCategoryChips()
         setupBottomNavigation()
 
         // Configure SwipeRefreshLayout
@@ -143,56 +124,6 @@ class home : AppCompatActivity() {
         rvFeed.adapter = adapter
     }
 
-    private fun setupTabs() {
-        tabForYou.setOnClickListener {
-            if (isFollowingTab) {
-                isFollowingTab = false
-                tvTabForYou.setTextColor(getColor(R.color.primary_text))
-                indicatorForYou.setBackgroundResource(R.drawable.bg_primary_button)
-                tvTabFollowing.setTextColor(getColor(R.color.secondary_text))
-                indicatorFollowing.setBackgroundColor(getColor(android.R.color.transparent))
-                filterAndDisplayBlogs()
-            }
-        }
-
-        tabFollowing.setOnClickListener {
-            if (!isFollowingTab) {
-                isFollowingTab = true
-                tvTabFollowing.setTextColor(getColor(R.color.primary_text))
-                indicatorFollowing.setBackgroundResource(R.drawable.bg_primary_button)
-                tvTabForYou.setTextColor(getColor(R.color.secondary_text))
-                indicatorForYou.setBackgroundColor(getColor(android.R.color.transparent))
-                filterAndDisplayBlogs()
-            }
-        }
-    }
-
-    private fun setupCategoryChips() {
-        val chips = listOf(
-            findViewById<TextView>(R.id.chipHomeAll) to "All",
-            findViewById<TextView>(R.id.chipHomeTech) to "Tech",
-            findViewById<TextView>(R.id.chipHomeDesign) to "Design",
-            findViewById<TextView>(R.id.chipHomeLife) to "Life",
-            findViewById<TextView>(R.id.chipHomeArt) to "Art"
-        )
-
-        for ((chipView, categoryName) in chips) {
-            chipView.setOnClickListener {
-                selectedCategory = categoryName
-                for ((otherView, otherName) in chips) {
-                    if (otherName == selectedCategory) {
-                        otherView.setBackgroundResource(R.drawable.bg_pill_filter_selected)
-                        otherView.setTextColor(getColor(R.color.white))
-                    } else {
-                        otherView.setBackgroundResource(R.drawable.bg_pill_filter_unselected)
-                        otherView.setTextColor(getColor(R.color.secondary_text))
-                    }
-                }
-                filterAndDisplayBlogs()
-            }
-        }
-    }
-
     private fun fetchBlogs(isSwipeRefresh: Boolean = false) {
         if (!isSwipeRefresh) {
             pbLoading.visibility = View.VISIBLE
@@ -261,27 +192,12 @@ class home : AppCompatActivity() {
 
     private fun filterAndDisplayBlogs() {
         displayedBlogs.clear()
-
-        val filtered = allBlogs.filter { blog ->
-            val matchesCategory = (selectedCategory == "All" || blog.category.equals(selectedCategory, ignoreCase = true))
-            val matchesTab = if (isFollowingTab) {
-                blog.authorId.isNotEmpty() && followedAuthorIds.contains(blog.authorId)
-            } else {
-                true
-            }
-            matchesCategory && matchesTab
-        }
-
-        displayedBlogs.addAll(filtered)
+        displayedBlogs.addAll(allBlogs)
         adapter.notifyDataSetChanged()
 
         if (displayedBlogs.isEmpty()) {
             tvEmpty.visibility = View.VISIBLE
-            if (isFollowingTab) {
-                tvEmpty.text = "You're not following any creators with posts yet.\nExplore Discover to find creators to follow!"
-            } else {
-                tvEmpty.text = "No stories found in this category.\nBe the first to share one!"
-            }
+            tvEmpty.text = "No stories published yet.\nBe the first to share one!"
         } else {
             tvEmpty.visibility = View.GONE
         }
@@ -421,9 +337,6 @@ class home : AppCompatActivity() {
 
         // Optimistically update UI
         adapter.updateFollowedUsers(followedAuthorIds)
-        if (isFollowingTab) {
-            filterAndDisplayBlogs()
-        }
         onDone?.invoke()
 
         val msg = if (isCurrentlyFollowed) "Unfollowed $authorName" else "Following $authorName"
@@ -437,9 +350,6 @@ class home : AppCompatActivity() {
                 followedAuthorIds.remove(authorId)
             }
             adapter.updateFollowedUsers(followedAuthorIds)
-            if (isFollowingTab) {
-                filterAndDisplayBlogs()
-            }
             onDone?.invoke()
             Toast.makeText(this, "Failed to update follow: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
         }

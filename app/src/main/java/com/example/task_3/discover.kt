@@ -27,8 +27,10 @@ class discover : AppCompatActivity() {
 
     private lateinit var etSearch: EditText
     private lateinit var btnClearSearch: View
-    private lateinit var tabSearchPosts: TextView
-    private lateinit var tabSearchPeople: TextView
+    private lateinit var btnDiscoverFilter: View
+    private lateinit var viewFilterActiveDot: View
+    private lateinit var tvActiveCategoryBadge: TextView
+    private lateinit var tvSectionTitle: TextView
 
     private lateinit var viewPostsSection: LinearLayout
     private lateinit var viewPeopleSection: LinearLayout
@@ -59,8 +61,10 @@ class discover : AppCompatActivity() {
 
         etSearch = findViewById(R.id.etSearch)
         btnClearSearch = findViewById(R.id.btnClearSearch)
-        tabSearchPosts = findViewById(R.id.tabSearchPosts)
-        tabSearchPeople = findViewById(R.id.tabSearchPeople)
+        btnDiscoverFilter = findViewById(R.id.btnDiscoverFilter)
+        viewFilterActiveDot = findViewById(R.id.viewFilterActiveDot)
+        tvActiveCategoryBadge = findViewById(R.id.tvActiveCategoryBadge)
+        tvSectionTitle = findViewById(R.id.tvSectionTitle)
 
         viewPostsSection = findViewById(R.id.viewPostsSection)
         viewPeopleSection = findViewById(R.id.viewPeopleSection)
@@ -73,8 +77,7 @@ class discover : AppCompatActivity() {
 
         setupAdapters()
         setupSearch()
-        setupTabs()
-        setupCategoryChips()
+        setupFilterButton()
         setupBottomNavigation()
 
         loadData()
@@ -164,60 +167,137 @@ class discover : AppCompatActivity() {
         }
     }
 
-    private fun setupTabs() {
-        tabSearchPosts.setOnClickListener {
-            if (!isSearchingPosts) {
-                isSearchingPosts = true
-                tabSearchPosts.setBackgroundResource(R.drawable.bg_pill_filter_selected)
-                tabSearchPosts.setTextColor(getColor(R.color.white))
-                tabSearchPeople.setBackgroundResource(R.drawable.bg_pill_filter_unselected)
-                tabSearchPeople.setTextColor(getColor(R.color.secondary_text))
-
-                viewPostsSection.visibility = View.VISIBLE
-                viewPeopleSection.visibility = View.GONE
-                applyFilters()
-            }
+    private fun setupFilterButton() {
+        btnDiscoverFilter.setOnClickListener {
+            showFilterDialog()
         }
-
-        tabSearchPeople.setOnClickListener {
-            if (isSearchingPosts) {
-                isSearchingPosts = false
-                tabSearchPeople.setBackgroundResource(R.drawable.bg_pill_filter_selected)
-                tabSearchPeople.setTextColor(getColor(R.color.white))
-                tabSearchPosts.setBackgroundResource(R.drawable.bg_pill_filter_unselected)
-                tabSearchPosts.setTextColor(getColor(R.color.secondary_text))
-
-                viewPostsSection.visibility = View.GONE
-                viewPeopleSection.visibility = View.VISIBLE
-                applyFilters()
-            }
+        tvActiveCategoryBadge.setOnClickListener {
+            showFilterDialog()
         }
+        updateFilterBadgeAndHint()
     }
 
-    private fun setupCategoryChips() {
-        val chips = listOf(
-            findViewById<TextView>(R.id.chipTech) to "Tech",
-            findViewById<TextView>(R.id.chipDesign) to "Design",
-            findViewById<TextView>(R.id.chipLife) to "Life",
-            findViewById<TextView>(R.id.chipArt) to "Art"
+    private fun updateFilterBadgeAndHint() {
+        if (isSearchingPosts) {
+            viewPostsSection.visibility = View.VISIBLE
+            viewPeopleSection.visibility = View.GONE
+            etSearch.hint = if (selectedCategory == "All") {
+                "Search stories & topics..."
+            } else {
+                "Search in $selectedCategory..."
+            }
+            tvActiveCategoryBadge.text = if (selectedCategory == "All") "All Topics" else selectedCategory
+            tvActiveCategoryBadge.visibility = View.VISIBLE
+            tvSectionTitle.text = if (selectedCategory == "All") "Trending stories" else "$selectedCategory stories"
+        } else {
+            viewPostsSection.visibility = View.GONE
+            viewPeopleSection.visibility = View.VISIBLE
+            etSearch.hint = "Search creators by name or handle..."
+            tvActiveCategoryBadge.visibility = View.GONE
+        }
+
+        // Active dot is shown if filter is customized (i.e. searching People, or Category != "All")
+        val isCustomFilterActive = !isSearchingPosts || selectedCategory != "All"
+        viewFilterActiveDot.visibility = if (isCustomFilterActive) View.VISIBLE else View.GONE
+    }
+
+    private fun showFilterDialog() {
+        val dialog = BottomSheetDialog(this)
+        val view = layoutInflater.inflate(R.layout.dialog_discover_filter, null)
+        dialog.setContentView(view)
+
+        val btnTypePosts = view.findViewById<TextView>(R.id.btnFilterTypePosts)
+        val btnTypePeople = view.findViewById<TextView>(R.id.btnFilterTypePeople)
+        val layoutCategorySection = view.findViewById<View>(R.id.layoutCategoryFilterSection)
+        val btnReset = view.findViewById<TextView>(R.id.btnFilterReset)
+        val btnClose = view.findViewById<TextView>(R.id.btnFilterClose)
+        val btnApply = view.findViewById<Button>(R.id.btnFilterApply)
+
+        val chipAll = view.findViewById<TextView>(R.id.chipFilterAll)
+        val chipTech = view.findViewById<TextView>(R.id.chipFilterTech)
+        val chipDesign = view.findViewById<TextView>(R.id.chipFilterDesign)
+        val chipLife = view.findViewById<TextView>(R.id.chipFilterLife)
+        val chipArt = view.findViewById<TextView>(R.id.chipFilterArt)
+
+        val categoryChips = listOf(
+            chipAll to "All",
+            chipTech to "Tech",
+            chipDesign to "Design",
+            chipLife to "Life",
+            chipArt to "Art"
         )
 
-        for ((chipView, cat) in chips) {
-            chipView.setOnClickListener {
-                selectedCategory = if (selectedCategory == cat) "All" else cat
+        var tempIsSearchingPosts = isSearchingPosts
+        var tempCategory = selectedCategory
 
-                for ((otherView, otherCat) in chips) {
-                    if (otherCat == selectedCategory) {
-                        otherView.setBackgroundResource(R.drawable.bg_pill_filter_selected)
-                        otherView.setTextColor(getColor(R.color.white))
-                    } else {
-                        otherView.setBackgroundResource(R.drawable.bg_pill_filter_unselected)
-                        otherView.setTextColor(getColor(R.color.secondary_text))
-                    }
-                }
-                applyFilters()
+        fun updateTypeUi() {
+            if (tempIsSearchingPosts) {
+                btnTypePosts.setBackgroundResource(R.drawable.bg_pill_filter_selected)
+                btnTypePosts.setTextColor(getColor(R.color.white))
+                btnTypePeople.setBackgroundResource(R.drawable.bg_pill_filter_unselected)
+                btnTypePeople.setTextColor(getColor(R.color.secondary_text))
+                layoutCategorySection.visibility = View.VISIBLE
+            } else {
+                btnTypePeople.setBackgroundResource(R.drawable.bg_pill_filter_selected)
+                btnTypePeople.setTextColor(getColor(R.color.white))
+                btnTypePosts.setBackgroundResource(R.drawable.bg_pill_filter_unselected)
+                btnTypePosts.setTextColor(getColor(R.color.secondary_text))
+                layoutCategorySection.visibility = View.GONE
             }
         }
+
+        fun updateCategoryUi() {
+            for ((chipView, cat) in categoryChips) {
+                if (cat.equals(tempCategory, ignoreCase = true)) {
+                    chipView.setBackgroundResource(R.drawable.bg_pill_filter_selected)
+                    chipView.setTextColor(getColor(R.color.white))
+                } else {
+                    chipView.setBackgroundResource(R.drawable.bg_pill_filter_unselected)
+                    chipView.setTextColor(getColor(R.color.secondary_text))
+                }
+            }
+        }
+
+        updateTypeUi()
+        updateCategoryUi()
+
+        btnTypePosts.setOnClickListener {
+            tempIsSearchingPosts = true
+            updateTypeUi()
+        }
+
+        btnTypePeople.setOnClickListener {
+            tempIsSearchingPosts = false
+            updateTypeUi()
+        }
+
+        for ((chipView, cat) in categoryChips) {
+            chipView.setOnClickListener {
+                tempCategory = cat
+                updateCategoryUi()
+            }
+        }
+
+        btnReset.setOnClickListener {
+            tempIsSearchingPosts = true
+            tempCategory = "All"
+            updateTypeUi()
+            updateCategoryUi()
+        }
+
+        btnClose.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        btnApply.setOnClickListener {
+            isSearchingPosts = tempIsSearchingPosts
+            selectedCategory = tempCategory
+            updateFilterBadgeAndHint()
+            applyFilters()
+            dialog.dismiss()
+        }
+
+        dialog.show()
     }
 
     private fun loadData() {
@@ -448,6 +528,15 @@ class discover : AppCompatActivity() {
             filteredBlogs.addAll(matches)
             blogsAdapter.notifyDataSetChanged()
             tvEmpty.visibility = if (filteredBlogs.isEmpty()) View.VISIBLE else View.GONE
+            if (filteredBlogs.isEmpty()) {
+                tvEmpty.text = if (currentQuery.isNotEmpty()) {
+                    "No stories found matching \"$currentQuery\""
+                } else if (selectedCategory != "All") {
+                    "No stories found in $selectedCategory"
+                } else {
+                    "No stories found"
+                }
+            }
         } else {
             filteredUsers.clear()
             val matches = allUsers.filter { user ->
@@ -458,6 +547,13 @@ class discover : AppCompatActivity() {
             filteredUsers.addAll(matches)
             usersAdapter.notifyDataSetChanged()
             tvEmpty.visibility = if (filteredUsers.isEmpty()) View.VISIBLE else View.GONE
+            if (filteredUsers.isEmpty()) {
+                tvEmpty.text = if (currentQuery.isNotEmpty()) {
+                    "No creators found matching \"$currentQuery\""
+                } else {
+                    "No creators found"
+                }
+            }
         }
     }
 
