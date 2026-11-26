@@ -315,17 +315,29 @@ class home : AppCompatActivity() {
         adapter.notifyItemChanged(position)
 
         val docRef = db.collection("blogs").document(blog.id)
-        if (newIsLiked) {
-            docRef.update(
-                "likesCount", FieldValue.increment(1),
-                "likedBy", FieldValue.arrayUnion(currentUid)
+        val updates = if (newIsLiked) {
+            mapOf(
+                "likesCount" to FieldValue.increment(1),
+                "likedBy" to FieldValue.arrayUnion(currentUid)
             )
         } else {
-            docRef.update(
-                "likesCount", FieldValue.increment(-1),
-                "likedBy", FieldValue.arrayRemove(currentUid)
+            mapOf(
+                "likesCount" to FieldValue.increment(-1),
+                "likedBy" to FieldValue.arrayRemove(currentUid)
             )
         }
+
+        docRef.set(updates, SetOptions.merge())
+            .addOnFailureListener { e ->
+                // Revert local state if Firestore write fails
+                allBlogs.find { it.id == blog.id }?.let {
+                    val idx = allBlogs.indexOf(it)
+                    if (idx != -1) allBlogs[idx] = blog
+                }
+                displayedBlogs[position] = blog
+                adapter.notifyItemChanged(position)
+                Toast.makeText(this, "Failed to update like: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+            }
     }
 
     private fun handleEdit(blog: Blog) {
@@ -484,7 +496,7 @@ class home : AppCompatActivity() {
         )
         tvTime.text = relativeTime
 
-        if (blog.imageUrl.isNotEmpty()) {
+        if (blog.imageUrl.isNotBlank()) {
             ivCover.visibility = View.VISIBLE
             ivCover.load(blog.imageUrl) {
                 crossfade(true)

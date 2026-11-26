@@ -37,6 +37,8 @@ class BlogRecyclerAdapter(
         val tvTime: TextView = view.findViewById(R.id.tvBlogTime)
         val btnFollowAuthor: Button = view.findViewById(R.id.btnFollowAuthor)
         val tvCategory: TextView = view.findViewById(R.id.tvBlogCategory)
+        val tvCategoryInline: TextView = view.findViewById(R.id.tvBlogCategoryInline)
+        val coverImageContainer: View = view.findViewById(R.id.coverImageContainer)
         val tvTitle: TextView = view.findViewById(R.id.tvBlogTitle)
         val tvContent: TextView = view.findViewById(R.id.tvBlogContent)
         val ivCover: ImageView = view.findViewById(R.id.ivBlogCover)
@@ -105,16 +107,22 @@ class BlogRecyclerAdapter(
             }
         }
 
-        // Cover Image with Coil
-        if (blog.imageUrl.isNotEmpty()) {
+        // Cover Image Handling
+        if (blog.imageUrl.isNotBlank()) {
+            holder.coverImageContainer.visibility = View.VISIBLE
             holder.ivCover.visibility = View.VISIBLE
             holder.tvCoverPlaceholder.visibility = View.GONE
+            holder.tvCategory.visibility = View.VISIBLE
+            holder.tvCategory.text = blog.category
+            holder.tvCategoryInline.visibility = View.GONE
             holder.ivCover.load(blog.imageUrl) {
                 crossfade(true)
             }
         } else {
-            holder.ivCover.visibility = View.GONE
-            holder.tvCoverPlaceholder.visibility = View.VISIBLE
+            // No image slot: remove container completely and show inline category
+            holder.coverImageContainer.visibility = View.GONE
+            holder.tvCategoryInline.visibility = View.VISIBLE
+            holder.tvCategoryInline.text = blog.category
         }
 
         // Likes

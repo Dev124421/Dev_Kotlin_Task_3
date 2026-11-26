@@ -131,12 +131,27 @@
             android:textStyle="bold" />
     </FrameLayout>
 
+    <!-- Inline Category Pill for stories without image -->
+    <TextView
+        android:id="@+id/tvBlogCategoryInline"
+        android:layout_width="wrap_content"
+        android:layout_height="22dp"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/bg_pill_filter_selected"
+        android:gravity="center"
+        android:paddingHorizontal="10dp"
+        android:text="Tech"
+        android:textColor="@color/white"
+        android:textSize="10sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
     <!-- Blog Title -->
     <TextView
         android:id="@+id/tvBlogTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="8dp"
         android:text="The Future of AI in Design"
         android:textColor="@color/primary_text"
         android:textSize="17sp"
@@ -150,7 +165,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
         android:ellipsize="end"
-        android:maxLines="2"
+        android:maxLines="3"
         android:text="Explore how Artificial Intelligence is shaping the future of creativity..."
         android:textColor="@color/secondary_text"
         android:textSize="13sp"
