@@ -18,6 +18,7 @@ class BlogRecyclerAdapter(
     private val currentUserId: String,
     private var followedUserIds: Set<String> = emptySet(),
     private val onFollowClick: ((Blog, Int) -> Unit)? = null,
+    private val onAuthorClick: ((Blog) -> Unit)? = null,
     private val onLikeClick: (Blog, Int) -> Unit,
     private val onCommentClick: (Blog) -> Unit,
     private val onSaveClick: (Blog, Int) -> Unit,
@@ -75,6 +76,13 @@ class BlogRecyclerAdapter(
         } else {
             holder.ivAuthorAvatar.setImageResource(R.drawable.bg_avatar_placeholder)
         }
+
+        // Tapping author avatar or name opens creator profile
+        val openAuthor = View.OnClickListener {
+            onAuthorClick?.invoke(blog)
+        }
+        holder.ivAuthorAvatar.setOnClickListener(openAuthor)
+        holder.tvAuthor.setOnClickListener(openAuthor)
         holder.tvTitle.text = blog.title
         holder.tvContent.text = blog.content
         holder.tvCategory.text = blog.category

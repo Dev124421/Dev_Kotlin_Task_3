@@ -91,6 +91,9 @@ class discover : AppCompatActivity() {
             onFollowClick = { blog, _ ->
                 handleFollowToggle(blog.authorId, blog.author)
             },
+            onAuthorClick = { blog ->
+                openUserProfile(blog.authorId, blog.author)
+            },
             onLikeClick = { blog, pos -> handleLike(blog, pos) },
             onCommentClick = { blog ->
                 Toast.makeText(this, "Comments for \"${blog.title}\"", Toast.LENGTH_SHORT).show()
@@ -131,9 +134,16 @@ class discover : AppCompatActivity() {
         rvTrendingPosts.layoutManager = LinearLayoutManager(this)
         rvTrendingPosts.adapter = blogsAdapter
 
-        usersAdapter = UserSearchAdapter(this, filteredUsers) { user, _ ->
-            handleFollowToggle(user.uid, user.name)
-        }
+        usersAdapter = UserSearchAdapter(
+            context = this,
+            users = filteredUsers,
+            onFollowClick = { user, _ ->
+                handleFollowToggle(user.uid, user.name)
+            },
+            onUserClick = { user ->
+                openUserProfile(user.uid, user.name)
+            }
+        )
         rvUsers.layoutManager = LinearLayoutManager(this)
         rvUsers.adapter = usersAdapter
     }
@@ -471,6 +481,14 @@ class discover : AppCompatActivity() {
         tvCategory.text = blog.category
         tvAuthor.text = blog.author
 
+        // Tap author avatar or name in reader to open creator profile
+        val openAuthor = View.OnClickListener {
+            dialog.dismiss()
+            openUserProfile(blog.authorId, blog.author)
+        }
+        ivAuthorAvatar.setOnClickListener(openAuthor)
+        tvAuthor.setOnClickListener(openAuthor)
+
         val currentUid = auth.currentUser?.uid ?: ""
         val isOwnPost = currentUid.isNotEmpty() && blog.authorId == currentUid
         if (isOwnPost || blog.authorId.isEmpty()) {
@@ -529,6 +547,20 @@ class discover : AppCompatActivity() {
         }
 
         dialog.show()
+    }
+
+    private fun openUserProfile(authorId: String, authorName: String) {
+        if (authorId.isEmpty()) return
+        val currentUid = auth.currentUser?.uid ?: ""
+        if (authorId == currentUid) {
+            startActivity(Intent(this, profile::class.java))
+        } else {
+            val intent = Intent(this, UserProfileActivity::class.java).apply {
+                putExtra("USER_ID", authorId)
+                putExtra("USER_NAME", authorName)
+            }
+            startActivity(intent)
+        }
     }
 
     private fun setupBottomNavigation() {

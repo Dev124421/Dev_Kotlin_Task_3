@@ -134,6 +134,9 @@ class profile : AppCompatActivity() {
             onFollowClick = { blog, _ ->
                 handleFollowToggle(blog.authorId, blog.author)
             },
+            onAuthorClick = { blog ->
+                openUserProfile(blog.authorId, blog.author)
+            },
             onLikeClick = { blog, pos -> handleLike(blog, pos) },
             onCommentClick = {},
             onSaveClick = { blog, pos ->
@@ -676,8 +679,24 @@ class profile : AppCompatActivity() {
         }
 
         lateinit var dialogAdapter: UserSearchAdapter
-        dialogAdapter = UserSearchAdapter(this, displayedDialogUsers) { user, position ->
-            handleFollowToggle(user.uid, user.name) {
+        dialogAdapter = UserSearchAdapter(
+            context = this,
+            users = displayedDialogUsers,
+            onFollowClick = { user, position ->
+                handleFollowToggle(user.uid, user.name) {
+                    val isNowFollowing = followedAuthorIds.contains(user.uid)
+                    val newStatus = if (isNowFollowing) "Following" else "Follow"
+                    user.followStatus = newStatus
+                    val targetIdx = allDialogUsers.indexOfFirst { it.uid == user.uid }
+                    if (targetIdx != -1) {
+                        allDialogUsers[targetIdx].followStatus = newStatus
+                    }
+                    dialogAdapter.notifyItemChanged(position)
+                    if (isFollowingList) {
+                        val count = allDialogUsers.count { it.followStatus == "Following" }
+                        tvSubtitle.text = count.toString()
+                    }
+                }
                 val isNowFollowing = followedAuthorIds.contains(user.uid)
                 val newStatus = if (isNowFollowing) "Following" else "Follow"
                 user.followStatus = newStatus
@@ -690,20 +709,12 @@ class profile : AppCompatActivity() {
                     val count = allDialogUsers.count { it.followStatus == "Following" }
                     tvSubtitle.text = count.toString()
                 }
+            },
+            onUserClick = { user ->
+                dialog.dismiss()
+                openUserProfile(user.uid, user.name)
             }
-            val isNowFollowing = followedAuthorIds.contains(user.uid)
-            val newStatus = if (isNowFollowing) "Following" else "Follow"
-            user.followStatus = newStatus
-            val targetIdx = allDialogUsers.indexOfFirst { it.uid == user.uid }
-            if (targetIdx != -1) {
-                allDialogUsers[targetIdx].followStatus = newStatus
-            }
-            dialogAdapter.notifyItemChanged(position)
-            if (isFollowingList) {
-                val count = allDialogUsers.count { it.followStatus == "Following" }
-                tvSubtitle.text = count.toString()
-            }
-        }
+        )
 
         rvUsers.layoutManager = LinearLayoutManager(this)
         rvUsers.adapter = dialogAdapter
@@ -803,6 +814,14 @@ class profile : AppCompatActivity() {
         tvCategory.text = blog.category
         tvAuthor.text = blog.author
 
+        // Tap author avatar or name in reader to open creator profile
+        val openAuthor = View.OnClickListener {
+            dialog.dismiss()
+            openUserProfile(blog.authorId, blog.author)
+        }
+        ivAuthorAvatar.setOnClickListener(openAuthor)
+        tvAuthor.setOnClickListener(openAuthor)
+
         val currentUid = auth.currentUser?.uid ?: ""
         val isOwnPost = currentUid.isNotEmpty() && blog.authorId == currentUid
         if (isOwnPost || blog.authorId.isEmpty()) {
@@ -861,6 +880,19 @@ class profile : AppCompatActivity() {
         }
 
         dialog.show()
+    }
+
+    private fun openUserProfile(authorId: String, authorName: String) {
+        if (authorId.isEmpty()) return
+        val currentUid = auth.currentUser?.uid ?: ""
+        if (authorId == currentUid) {
+            return
+        }
+        val intent = Intent(this, UserProfileActivity::class.java).apply {
+            putExtra("USER_ID", authorId)
+            putExtra("USER_NAME", authorName)
+        }
+        startActivity(intent)
     }
 
     private fun setupBottomNavigation() {

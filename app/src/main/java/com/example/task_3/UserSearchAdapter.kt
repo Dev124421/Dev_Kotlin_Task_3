@@ -13,7 +13,8 @@ import coil.load
 class UserSearchAdapter(
     private val context: Context,
     private val users: MutableList<UserItem>,
-    private val onFollowClick: (UserItem, Int) -> Unit
+    private val onFollowClick: (UserItem, Int) -> Unit,
+    private val onUserClick: ((UserItem) -> Unit)? = null
 ) : RecyclerView.Adapter<UserSearchAdapter.UserViewHolder>() {
 
     class UserViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -74,6 +75,10 @@ class UserSearchAdapter(
 
         holder.btnAction.setOnClickListener {
             onFollowClick(user, position)
+        }
+
+        holder.itemView.setOnClickListener {
+            onUserClick?.invoke(user)
         }
     }
 
