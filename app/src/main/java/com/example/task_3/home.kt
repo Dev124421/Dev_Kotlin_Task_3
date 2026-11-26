@@ -352,6 +352,12 @@ class home : AppCompatActivity() {
                     .addOnSuccessListener {
                         Toast.makeText(this, "Blog deleted", Toast.LENGTH_SHORT).show()
                         allBlogs.removeAll { it.id == blog.id }
+                        if (blog.authorId.isNotEmpty()) {
+                            db.collection("users").document(blog.authorId).set(
+                                mapOf("postsCount" to FieldValue.increment(-1)),
+                                SetOptions.merge()
+                            )
+                        }
                         filterAndDisplayBlogs()
                     }
                     .addOnFailureListener {

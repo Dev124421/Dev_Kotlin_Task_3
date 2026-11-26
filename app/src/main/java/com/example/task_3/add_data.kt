@@ -17,6 +17,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.storage.FirebaseStorage
 import java.util.UUID
 
@@ -254,7 +255,7 @@ class add_data : AppCompatActivity() {
                 .addOnSuccessListener {
                     if (authorId.isNotEmpty()) {
                         db.collection("users").document(authorId)
-                            .update("postsCount", FieldValue.increment(1))
+                            .set(mapOf("postsCount" to FieldValue.increment(1)), SetOptions.merge())
                     }
                     Toast.makeText(this, "Story published successfully!", Toast.LENGTH_SHORT).show()
                     finish()

@@ -183,6 +183,15 @@ class profile : AppCompatActivity() {
                     .addOnSuccessListener {
                         Toast.makeText(this, "Blog deleted", Toast.LENGTH_SHORT).show()
                         userBlogsList.removeAll { it.id == blog.id }
+                        val newCount = userBlogsList.size
+                        postsCountText.text = newCount.toString()
+                        val uid = auth.currentUser?.uid
+                        if (uid != null) {
+                            db.collection("users").document(uid).set(
+                                mapOf("postsCount" to newCount.toLong()),
+                                SetOptions.merge()
+                            )
+                        }
                         updateDisplayedList()
                     }
             },
@@ -237,6 +246,16 @@ class profile : AppCompatActivity() {
 
         btnSettings.setOnClickListener(openSettings)
         btnEditProfile.setOnClickListener(openSettings)
+
+        // Posts click: Switch to stories/blogs tab
+        val layoutPosts = findViewById<View>(R.id.layoutPosts)
+        val openStories = View.OnClickListener {
+            if (isSavedTab) {
+                tabBlogs.performClick()
+            }
+        }
+        layoutPosts?.setOnClickListener(openStories)
+        postsCountText.setOnClickListener(openStories)
 
         // Followers & Following clicks: Show centered popup dialog in middle of screen
         val layoutFollowers = findViewById<View>(R.id.layoutFollowers)
@@ -296,8 +315,12 @@ class profile : AppCompatActivity() {
                     genderText.text = doc.getString("gender") ?: "Not specified"
                     addressText.text = doc.getString("address") ?: "—"
 
-                    val posts = doc.getLong("postsCount") ?: 0L
-                    postsCountText.text = posts.toString()
+                    val posts = doc.getLong("postsCount")
+                    if (posts != null && userBlogsList.isEmpty()) {
+                        postsCountText.text = posts.toString()
+                    } else if (userBlogsList.isNotEmpty()) {
+                        postsCountText.text = userBlogsList.size.toString()
+                    }
                     followersCountText.text = (doc.getLong("followersCount") ?: 0L).toString()
                     followingCountText.text = (doc.getLong("followingCount") ?: 0L).toString()
 
@@ -330,32 +353,71 @@ class profile : AppCompatActivity() {
         db.collection("blogs")
             .whereEqualTo("authorId", uid)
             .get()
-            .addOnSuccessListener { result ->
-                userBlogsList.clear()
-                val currentUid = auth.currentUser?.uid ?: ""
-                for (doc in result) {
-                    val likedBy = (doc.get("likedBy") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
-                    val isLiked = currentUid.isNotEmpty() && likedBy.contains(currentUid)
-                    val blog = Blog(
-                        id = doc.id,
-                        title = doc.getString("title") ?: "",
-                        content = doc.getString("content") ?: "",
-                        category = doc.getString("category") ?: "Tech",
-                        imageUrl = doc.getString("imageUrl") ?: "",
-                        author = doc.getString("author") ?: "You",
-                        authorId = uid,
-                        authorPhotoUrl = doc.getString("authorPhotoUrl") ?: (auth.currentUser?.photoUrl?.toString() ?: ""),
-                        likesCount = doc.getLong("likesCount") ?: likedBy.size.toLong(),
-                        commentsCount = doc.getLong("commentsCount") ?: 0L,
-                        timestamp = doc.getLong("timestamp") ?: System.currentTimeMillis(),
-                        likedBy = likedBy,
-                        isLiked = isLiked
-                    )
-                    userBlogsList.add(blog)
+            .addOnSuccessListener { snap1 ->
+                val blogDocs = mutableMapOf<String, DocumentSnapshot>()
+                for (doc in snap1.documents) {
+                    blogDocs[doc.id] = doc
                 }
-                postsCountText.text = userBlogsList.size.toString()
-                updateDisplayedList()
+
+                // Also check legacy blogs with "uid" field
+                db.collection("blogs")
+                    .whereEqualTo("uid", uid)
+                    .get()
+                    .addOnSuccessListener { snap2 ->
+                        for (doc in snap2.documents) {
+                            blogDocs[doc.id] = doc
+                        }
+                        parseAndDisplayUserBlogs(blogDocs.values, uid)
+                    }
+                    .addOnFailureListener {
+                        parseAndDisplayUserBlogs(blogDocs.values, uid)
+                    }
             }
+            .addOnFailureListener {
+                db.collection("blogs")
+                    .whereEqualTo("uid", uid)
+                    .get()
+                    .addOnSuccessListener { snap2 ->
+                        val blogDocs = snap2.documents.associateBy { it.id }
+                        parseAndDisplayUserBlogs(blogDocs.values, uid)
+                    }
+            }
+    }
+
+    private fun parseAndDisplayUserBlogs(docs: Collection<DocumentSnapshot>, uid: String) {
+        userBlogsList.clear()
+        for (doc in docs) {
+            val likedBy = (doc.get("likedBy") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+            val isLiked = uid.isNotEmpty() && likedBy.contains(uid)
+            val blog = Blog(
+                id = doc.id,
+                title = doc.getString("title") ?: "",
+                content = doc.getString("content") ?: "",
+                category = doc.getString("category") ?: "Tech",
+                imageUrl = doc.getString("imageUrl") ?: "",
+                author = doc.getString("author") ?: "You",
+                authorId = uid,
+                authorPhotoUrl = doc.getString("authorPhotoUrl") ?: (auth.currentUser?.photoUrl?.toString() ?: ""),
+                likesCount = doc.getLong("likesCount") ?: likedBy.size.toLong(),
+                commentsCount = doc.getLong("commentsCount") ?: 0L,
+                timestamp = doc.getLong("timestamp") ?: System.currentTimeMillis(),
+                likedBy = likedBy,
+                isLiked = isLiked
+            )
+            userBlogsList.add(blog)
+        }
+        userBlogsList.sortByDescending { it.timestamp }
+
+        val count = userBlogsList.size
+        postsCountText.text = count.toString()
+
+        // Sync count to users document in Firestore
+        db.collection("users").document(uid).set(
+            mapOf("postsCount" to count.toLong()),
+            SetOptions.merge()
+        )
+
+        updateDisplayedList()
     }
 
     private fun loadSavedBlogs() {
