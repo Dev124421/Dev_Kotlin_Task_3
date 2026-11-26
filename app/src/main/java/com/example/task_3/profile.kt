@@ -1,11 +1,21 @@
 package com.example.task_3
 
+import android.app.Dialog
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
+import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup
+import android.view.Window
 import android.widget.Button
+import android.widget.EditText
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -13,10 +23,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
+import com.google.android.gms.tasks.Tasks
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
@@ -225,6 +237,22 @@ class profile : AppCompatActivity() {
 
         btnSettings.setOnClickListener(openSettings)
         btnEditProfile.setOnClickListener(openSettings)
+
+        // Followers & Following clicks: Show centered popup dialog in middle of screen
+        val layoutFollowers = findViewById<View>(R.id.layoutFollowers)
+        val layoutFollowing = findViewById<View>(R.id.layoutFollowing)
+
+        val openFollowers = View.OnClickListener {
+            showUsersDialog(isFollowingList = false)
+        }
+        val openFollowing = View.OnClickListener {
+            showUsersDialog(isFollowingList = true)
+        }
+
+        layoutFollowers?.setOnClickListener(openFollowers)
+        followersCountText.setOnClickListener(openFollowers)
+        layoutFollowing?.setOnClickListener(openFollowing)
+        followingCountText.setOnClickListener(openFollowing)
     }
 
     private fun uploadProfilePicture(uri: Uri) {
@@ -514,6 +542,165 @@ class profile : AppCompatActivity() {
             onDone?.invoke()
             Toast.makeText(this, "Failed to update follow: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun showUsersDialog(isFollowingList: Boolean) {
+        val currentUid = auth.currentUser?.uid ?: return
+
+        val dialog = Dialog(this)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        dialog.setContentView(R.layout.dialog_user_list)
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        dialog.window?.setGravity(Gravity.CENTER)
+
+        val tvTitle = dialog.findViewById<TextView>(R.id.tvDialogTitle)
+        val tvSubtitle = dialog.findViewById<TextView>(R.id.tvDialogSubtitle)
+        val btnClose = dialog.findViewById<TextView>(R.id.btnDialogClose)
+        val etSearch = dialog.findViewById<EditText>(R.id.etDialogSearch)
+        val pbLoading = dialog.findViewById<ProgressBar>(R.id.pbDialogLoading)
+        val tvEmpty = dialog.findViewById<TextView>(R.id.tvDialogEmpty)
+        val rvUsers = dialog.findViewById<RecyclerView>(R.id.rvDialogUsers)
+
+        tvTitle.text = if (isFollowingList) "Following" else "Followers"
+        tvSubtitle.text = "0"
+        etSearch.hint = if (isFollowingList) "Search following..." else "Search followers..."
+
+        pbLoading.visibility = View.VISIBLE
+        tvEmpty.visibility = View.GONE
+        rvUsers.visibility = View.GONE
+
+        val allDialogUsers = mutableListOf<UserItem>()
+        val displayedDialogUsers = mutableListOf<UserItem>()
+
+        fun applyFilter(query: String) {
+            displayedDialogUsers.clear()
+            val filtered = if (query.isEmpty()) {
+                allDialogUsers
+            } else {
+                allDialogUsers.filter {
+                    it.name.contains(query, ignoreCase = true) ||
+                            it.username.contains(query, ignoreCase = true)
+                }
+            }
+            displayedDialogUsers.addAll(filtered)
+            dialog.findViewById<RecyclerView>(R.id.rvDialogUsers)?.adapter?.notifyDataSetChanged()
+            tvEmpty.visibility = if (displayedDialogUsers.isEmpty()) View.VISIBLE else View.GONE
+            if (displayedDialogUsers.isEmpty()) {
+                tvEmpty.text = if (query.isEmpty()) {
+                    if (isFollowingList) "You are not following anyone yet.\nExplore Discover to find creators!"
+                    else "No followers yet.\nShare great stories to build your audience!"
+                } else {
+                    "No results matching \"$query\""
+                }
+            }
+        }
+
+        lateinit var dialogAdapter: UserSearchAdapter
+        dialogAdapter = UserSearchAdapter(this, displayedDialogUsers) { user, position ->
+            handleFollowToggle(user.uid, user.name) {
+                val isNowFollowing = followedAuthorIds.contains(user.uid)
+                val newStatus = if (isNowFollowing) "Following" else "Follow"
+                user.followStatus = newStatus
+                val targetIdx = allDialogUsers.indexOfFirst { it.uid == user.uid }
+                if (targetIdx != -1) {
+                    allDialogUsers[targetIdx].followStatus = newStatus
+                }
+                dialogAdapter.notifyItemChanged(position)
+                if (isFollowingList) {
+                    val count = allDialogUsers.count { it.followStatus == "Following" }
+                    tvSubtitle.text = count.toString()
+                }
+            }
+            val isNowFollowing = followedAuthorIds.contains(user.uid)
+            val newStatus = if (isNowFollowing) "Following" else "Follow"
+            user.followStatus = newStatus
+            val targetIdx = allDialogUsers.indexOfFirst { it.uid == user.uid }
+            if (targetIdx != -1) {
+                allDialogUsers[targetIdx].followStatus = newStatus
+            }
+            dialogAdapter.notifyItemChanged(position)
+            if (isFollowingList) {
+                val count = allDialogUsers.count { it.followStatus == "Following" }
+                tvSubtitle.text = count.toString()
+            }
+        }
+
+        rvUsers.layoutManager = LinearLayoutManager(this)
+        rvUsers.adapter = dialogAdapter
+
+        etSearch.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                applyFilter(s.toString().trim())
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
+
+        btnClose.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialog.show()
+        dialog.window?.setLayout(
+            (resources.displayMetrics.widthPixels * 0.90).toInt(),
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+
+        val collectionName = if (isFollowingList) "following" else "followers"
+        db.collection("users").document(currentUid).collection(collectionName).get()
+            .addOnSuccessListener { snapshot ->
+                val userIds = snapshot.documents.map { it.id }.filter { it.isNotEmpty() && it != currentUid }
+                tvSubtitle.text = userIds.size.toString()
+
+                if (userIds.isEmpty()) {
+                    pbLoading.visibility = View.GONE
+                    tvEmpty.visibility = View.VISIBLE
+                    tvEmpty.text = if (isFollowingList) {
+                        "You are not following anyone yet.\nExplore Discover to find creators!"
+                    } else {
+                        "No followers yet.\nShare great stories to build your audience!"
+                    }
+                    return@addOnSuccessListener
+                }
+
+                val tasks = userIds.map { id -> db.collection("users").document(id).get() }
+                Tasks.whenAllComplete(tasks).addOnSuccessListener {
+                    allDialogUsers.clear()
+                    for (task in tasks) {
+                        if (task.isSuccessful) {
+                            val doc = task.result as? DocumentSnapshot
+                            if (doc != null && doc.exists()) {
+                                val uid = doc.id
+                                val name = doc.getString("name") ?: "User"
+                                val username = doc.getString("username") ?: "creator"
+                                val bio = doc.getString("bio") ?: ""
+                                val photoUrl = doc.getString("photoUrl") ?: doc.getString("pfpUrl") ?: ""
+                                val isFollowing = followedAuthorIds.contains(uid)
+                                val status = if (isFollowing) "Following" else "Follow"
+                                allDialogUsers.add(UserItem(uid, name, username, bio, status, photoUrl))
+                            }
+                        }
+                    }
+
+                    pbLoading.visibility = View.GONE
+                    if (allDialogUsers.isEmpty()) {
+                        tvEmpty.visibility = View.VISIBLE
+                        tvEmpty.text = if (isFollowingList) "No following users found." else "No followers found."
+                    } else {
+                        rvUsers.visibility = View.VISIBLE
+                        applyFilter(etSearch.text.toString().trim())
+                    }
+                }.addOnFailureListener { e ->
+                    pbLoading.visibility = View.GONE
+                    tvEmpty.visibility = View.VISIBLE
+                    tvEmpty.text = "Failed to load profiles: ${e.localizedMessage}"
+                }
+            }
+            .addOnFailureListener { e ->
+                pbLoading.visibility = View.GONE
+                tvEmpty.visibility = View.VISIBLE
+                tvEmpty.text = "Failed to load: ${e.localizedMessage}"
+            }
     }
 
     private fun showBlogReaderDialog(blog: Blog) {
