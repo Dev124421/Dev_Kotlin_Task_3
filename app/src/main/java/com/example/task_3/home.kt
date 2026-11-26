@@ -12,6 +12,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import coil.load
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -32,6 +33,7 @@ class home : AppCompatActivity() {
     private val auth = FirebaseAuth.getInstance()
 
     private lateinit var rvFeed: RecyclerView
+    private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     private lateinit var pbLoading: ProgressBar
     private lateinit var tvEmpty: TextView
     private lateinit var bottomNav: BottomNavigationView
@@ -50,8 +52,8 @@ class home : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
 
-        val refresh = findViewById<Button>(R.id.refresh)
         rvFeed = findViewById(R.id.rvFeed)
+        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout)
         pbLoading = findViewById(R.id.pbFeedLoading)
         tvEmpty = findViewById(R.id.tvEmptyFeed)
         bottomNav = findViewById(R.id.bottom_nav)
@@ -70,11 +72,14 @@ class home : AppCompatActivity() {
         setupCategoryChips()
         setupBottomNavigation()
 
-        fetchBlogs()
-
-        refresh.setOnClickListener {
-            fetchBlogs()
+        // Configure SwipeRefreshLayout
+        swipeRefreshLayout.setColorSchemeResources(R.color.primary_red)
+        swipeRefreshLayout.setProgressBackgroundColorSchemeResource(R.color.card_surface)
+        swipeRefreshLayout.setOnRefreshListener {
+            fetchBlogs(isSwipeRefresh = true)
         }
+
+        fetchBlogs()
     }
 
     override fun onResume() {
@@ -185,13 +190,16 @@ class home : AppCompatActivity() {
         }
     }
 
-    private fun fetchBlogs() {
-        pbLoading.visibility = View.VISIBLE
+    private fun fetchBlogs(isSwipeRefresh: Boolean = false) {
+        if (!isSwipeRefresh) {
+            pbLoading.visibility = View.VISIBLE
+        }
         db.collection("blogs")
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .get()
             .addOnSuccessListener { result ->
                 pbLoading.visibility = View.GONE
+                swipeRefreshLayout.isRefreshing = false
                 allBlogs.clear()
                 val currentUid = auth.currentUser?.uid ?: ""
                 for (doc in result) {
@@ -243,6 +251,7 @@ class home : AppCompatActivity() {
             }
             .addOnFailureListener {
                 pbLoading.visibility = View.GONE
+                swipeRefreshLayout.isRefreshing = false
                 Toast.makeText(this, "Failed to load: ${it.localizedMessage}", Toast.LENGTH_SHORT).show()
             }
     }
