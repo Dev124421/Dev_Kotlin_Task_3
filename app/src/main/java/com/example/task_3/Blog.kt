@@ -10,7 +10,7 @@ data class Blog(
     val authorId: String = "",
     val authorPhotoUrl: String = "",
     val likesCount: Long = 0,
-    val commentsCount: Long = 0,
+    var commentsCount: Long = 0,
     val timestamp: Long = System.currentTimeMillis(),
     val likedBy: List<String> = emptyList(),
     var isLiked: Boolean = false,

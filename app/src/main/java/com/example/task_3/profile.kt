@@ -141,7 +141,14 @@ class profile : AppCompatActivity() {
                 openUserProfile(blog.authorId, blog.author)
             },
             onLikeClick = { blog, pos -> handleLike(blog, pos) },
-            onCommentClick = {},
+            onCommentClick = { blog ->
+                CommentAdapter.showCommentsBottomSheet(this, blog) { newCount ->
+                    userBlogsList.find { it.id == blog.id }?.commentsCount = newCount
+                    savedBlogsList.find { it.id == blog.id }?.commentsCount = newCount
+                    displayedList.find { it.id == blog.id }?.commentsCount = newCount
+                    adapter.notifyDataSetChanged()
+                }
+            },
             onSaveClick = { blog, pos ->
                 blog.isSaved = !blog.isSaved
                 adapter.notifyItemChanged(pos)

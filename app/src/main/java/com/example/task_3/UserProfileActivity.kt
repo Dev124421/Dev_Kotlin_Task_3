@@ -148,7 +148,12 @@ class UserProfileActivity : AppCompatActivity() {
                 }
             },
             onLikeClick = { blog, pos -> handleLike(blog, pos) },
-            onCommentClick = {},
+            onCommentClick = { blog ->
+                CommentAdapter.showCommentsBottomSheet(this, blog) { newCount ->
+                    userBlogsList.find { it.id == blog.id }?.commentsCount = newCount
+                    adapter.notifyDataSetChanged()
+                }
+            },
             onSaveClick = { blog, pos -> handleSave(blog, pos) },
             onEditClick = {},
             onDeleteClick = {},

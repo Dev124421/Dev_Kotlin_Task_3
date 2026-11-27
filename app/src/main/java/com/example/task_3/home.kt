@@ -101,7 +101,11 @@ class home : AppCompatActivity() {
             },
             onLikeClick = { blog, pos -> handleLike(blog, pos) },
             onCommentClick = { blog ->
-                Toast.makeText(this, "Comments for \"${blog.title}\"", Toast.LENGTH_SHORT).show()
+                CommentAdapter.showCommentsBottomSheet(this, blog) { newCount ->
+                    allBlogs.find { it.id == blog.id }?.commentsCount = newCount
+                    displayedBlogs.find { it.id == blog.id }?.commentsCount = newCount
+                    adapter.notifyDataSetChanged()
+                }
             },
             onSaveClick = { blog, pos ->
                 blog.isSaved = !blog.isSaved
