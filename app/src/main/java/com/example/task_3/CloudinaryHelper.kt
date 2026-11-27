@@ -112,4 +112,20 @@ object CloudinaryHelper {
                 onFailure(e)
             }
     }
+
+    /**
+     * Saves the Cloudinary profile cover/banner URL to Firestore (users/{uid}.coverPhotoUrl).
+     */
+    fun saveCoverPhotoToFirebase(
+        uid: String,
+        imageUrl: String,
+        db: FirebaseFirestore,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        db.collection("users").document(uid)
+            .set(mapOf("coverPhotoUrl" to imageUrl), SetOptions.merge())
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { e -> onFailure(e) }
+    }
 }

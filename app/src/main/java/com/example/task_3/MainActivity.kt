@@ -149,7 +149,6 @@ class MainActivity : AppCompatActivity() {
                                     "uid" to uid,
                                     "name" to name,
                                     "username" to cleanUsername,
-                                    "email" to email,
                                     "bio" to "Storyteller & Creator",
                                     "postsCount" to 0
                                 )

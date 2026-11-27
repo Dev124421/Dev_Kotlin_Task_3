@@ -22,6 +22,9 @@ import com.google.firebase.firestore.SetOptions
 class SettingsActivity : AppCompatActivity() {
 
     private lateinit var btnBack: TextView
+    private lateinit var ivSettingsBanner: ImageView
+    private lateinit var pbCoverUpload: ProgressBar
+    private lateinit var btnChangeCover: TextView
     private lateinit var ivSettingsAvatar: ImageView
     private lateinit var pbPfpUpload: ProgressBar
     private lateinit var btnChangePfp: TextView
@@ -49,11 +52,21 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
+    // Image Picker for Profile Background Cover
+    private val coverPickerLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        if (uri != null) {
+            uploadCoverPicture(uri)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
 
         btnBack = findViewById(R.id.btnBack)
+        ivSettingsBanner = findViewById(R.id.ivSettingsBanner)
+        pbCoverUpload = findViewById(R.id.pbCoverUpload)
+        btnChangeCover = findViewById(R.id.btnChangeCover)
         ivSettingsAvatar = findViewById(R.id.ivSettingsAvatar)
         pbPfpUpload = findViewById(R.id.pbPfpUpload)
         btnChangePfp = findViewById(R.id.btnChangePfp)
@@ -78,6 +91,11 @@ class SettingsActivity : AppCompatActivity() {
         // Change Profile Picture
         btnChangePfp.setOnClickListener {
             pfpPickerLauncher.launch("image/*")
+        }
+
+        // Change Background Cover
+        btnChangeCover.setOnClickListener {
+            coverPickerLauncher.launch("image/*")
         }
 
         // Save Profile
@@ -127,10 +145,16 @@ class SettingsActivity : AppCompatActivity() {
                             crossfade(true)
                         }
                     }
+
+                    val coverUrl = doc.getString("coverPhotoUrl") ?: ""
+                    if (coverUrl.isNotEmpty()) {
+                        ivSettingsBanner.load(coverUrl) {
+                            crossfade(true)
+                        }
+                    }
                 } else {
-                    etSettingsName.setText(auth.currentUser?.displayName ?: "")
-                    val derivedUsername = auth.currentUser?.email?.substringBefore("@") ?: ""
-                    etSettingsUsername.setText(derivedUsername)
+                    etSettingsName.setText(auth.currentUser?.displayName?.takeIf { !it.contains("@") } ?: "")
+                    etSettingsUsername.setText("")
                 }
             }
     }
@@ -172,6 +196,46 @@ class SettingsActivity : AppCompatActivity() {
                 pbPfpUpload.visibility = View.GONE
                 btnChangePfp.isEnabled = true
                 Toast.makeText(this, "Upload failed: $errorMessage", Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
+
+    private fun uploadCoverPicture(imageUri: Uri) {
+        val uid = auth.currentUser?.uid ?: return
+
+        pbCoverUpload.visibility = View.VISIBLE
+        btnChangeCover.isEnabled = false
+
+        CloudinaryHelper.uploadImage(
+            imageUri = imageUri,
+            folder = "inkora/profile_covers",
+            onSuccess = { urlString ->
+                CloudinaryHelper.saveCoverPhotoToFirebase(
+                    uid = uid,
+                    imageUrl = urlString,
+                    db = db,
+                    onSuccess = {
+                        if (isFinishing || isDestroyed) return@saveCoverPhotoToFirebase
+                        pbCoverUpload.visibility = View.GONE
+                        btnChangeCover.isEnabled = true
+                        ivSettingsBanner.load(urlString) {
+                            crossfade(true)
+                        }
+                        Toast.makeText(this, "Profile background updated!", Toast.LENGTH_SHORT).show()
+                    },
+                    onFailure = { e ->
+                        if (isFinishing || isDestroyed) return@saveCoverPhotoToFirebase
+                        pbCoverUpload.visibility = View.GONE
+                        btnChangeCover.isEnabled = true
+                        Toast.makeText(this, "Failed to save background URL: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                    }
+                )
+            },
+            onError = { errorMessage ->
+                if (isFinishing || isDestroyed) return@uploadImage
+                pbCoverUpload.visibility = View.GONE
+                btnChangeCover.isEnabled = true
+                Toast.makeText(this, "Background upload failed: $errorMessage", Toast.LENGTH_SHORT).show()
             }
         )
     }

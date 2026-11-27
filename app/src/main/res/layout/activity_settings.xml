@@ -65,14 +65,58 @@
             android:paddingTop="16dp"
             android:paddingBottom="40dp">
 
-            <!-- Profile Picture Section -->
+            <!-- Profile Picture & Background Cover Section -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@drawable/bg_card_dark"
                 android:gravity="center"
                 android:orientation="vertical"
-                android:padding="20dp">
+                android:padding="16dp">
+
+                <!-- Cover Background Preview -->
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="110dp"
+                    android:layout_marginBottom="14dp">
+
+                    <com.google.android.material.imageview.ShapeableImageView
+                        android:id="@+id/ivSettingsBanner"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/bg_profile_banner_default"
+                        android:scaleType="centerCrop"
+                        app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Medium" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/bg_profile_banner_fade" />
+
+                    <ProgressBar
+                        android:id="@+id/pbCoverUpload"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_gravity="center"
+                        android:indeterminateTint="@color/primary_red"
+                        android:visibility="gone" />
+
+                    <TextView
+                        android:id="@+id/btnChangeCover"
+                        android:layout_width="wrap_content"
+                        android:layout_height="30dp"
+                        android:layout_gravity="bottom|end"
+                        android:layout_margin="10dp"
+                        android:background="@drawable/bg_banner_badge"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:paddingHorizontal="12dp"
+                        android:text="🖼️ Change Background"
+                        android:textColor="@color/primary_text"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+                </FrameLayout>
 
                 <FrameLayout
                     android:layout_width="wrap_content"
@@ -80,8 +124,8 @@
 
                     <com.google.android.material.imageview.ShapeableImageView
                         android:id="@+id/ivSettingsAvatar"
-                        android:layout_width="92dp"
-                        android:layout_height="92dp"
+                        android:layout_width="88dp"
+                        android:layout_height="88dp"
                         android:scaleType="centerCrop"
                         android:background="@drawable/bg_avatar_placeholder"
                         app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full" />
@@ -99,7 +143,7 @@
                     android:id="@+id/btnChangePfp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginTop="10dp"
                     android:text="📷 Change Profile Picture"
                     android:textColor="@color/primary_red"
                     android:textSize="13sp"

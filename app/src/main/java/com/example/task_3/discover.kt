@@ -302,11 +302,12 @@ class discover : AppCompatActivity() {
 
     private fun loadData() {
         val currentUid = auth.currentUser?.uid ?: ""
+        val source = inkora.preferredSource(this)
 
         // Load following list
         if (currentUid.isNotEmpty()) {
             db.collection("users").document(currentUid).collection("following")
-                .get()
+                .get(source)
                 .addOnSuccessListener { followingSnap ->
                     followedAuthorIds.clear()
                     for (doc in followingSnap.documents) {
@@ -326,7 +327,7 @@ class discover : AppCompatActivity() {
         // Load blogs
         db.collection("blogs")
             .orderBy("timestamp", Query.Direction.DESCENDING)
-            .get()
+            .get(source)
             .addOnSuccessListener { result ->
                 allBlogs.clear()
                 for (doc in result) {
@@ -338,7 +339,7 @@ class discover : AppCompatActivity() {
                         content = doc.getString("content") ?: "",
                         category = doc.getString("category") ?: "Tech",
                         imageUrl = doc.getString("imageUrl") ?: "",
-                        author = doc.getString("author") ?: "Anonymous",
+                        author = doc.getString("author")?.takeIf { it.isNotBlank() && !it.contains("@") } ?: "Anonymous",
                         authorId = doc.getString("authorId") ?: "",
                         authorPhotoUrl = doc.getString("authorPhotoUrl") ?: "",
                         likesCount = doc.getLong("likesCount") ?: likedBy.size.toLong(),
@@ -351,7 +352,7 @@ class discover : AppCompatActivity() {
                 }
                 if (currentUid.isNotEmpty()) {
                     db.collection("users").document(currentUid).collection("saved_posts")
-                        .get()
+                        .get(source)
                         .addOnSuccessListener { savedDocs ->
                             val savedIds = savedDocs.documents.map { it.id }.toSet()
                             for (b in allBlogs) {
@@ -370,15 +371,15 @@ class discover : AppCompatActivity() {
         // Load users
         db.collection("users")
             .limit(20)
-            .get()
+            .get(source)
             .addOnSuccessListener { result ->
                 allUsers.clear()
                 for (doc in result) {
                     val uid = doc.getString("uid") ?: doc.id
                     if (uid == currentUid) continue
 
-                    val name = doc.getString("name") ?: "User"
-                    val username = doc.getString("username") ?: "creator"
+                    val name = doc.getString("name")?.takeIf { it.isNotBlank() && !it.contains("@") } ?: "User"
+                    val username = doc.getString("username")?.takeIf { it.isNotBlank() && !it.contains("@") } ?: "creator"
                     val bio = doc.getString("bio") ?: "Storyteller"
                     val photoUrl = doc.getString("photoUrl") ?: doc.getString("pfpUrl") ?: ""
                     val status = if (followedAuthorIds.contains(uid)) "Following" else "Follow"

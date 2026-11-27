@@ -34,12 +34,12 @@ import com.google.firebase.firestore.SetOptions
 
 class profile : AppCompatActivity() {
 
+    private lateinit var ivProfileBanner: ImageView
+    private lateinit var btnChangeCover: TextView
     private lateinit var profileAvatar: ImageView
     private lateinit var nameText: TextView
     private lateinit var userHandleText: TextView
-    private lateinit var ageText: TextView
-    private lateinit var genderText: TextView
-    private lateinit var addressText: TextView
+    private lateinit var userBioText: TextView
     private lateinit var postsCountText: TextView
     private lateinit var followersCountText: TextView
     private lateinit var followingCountText: TextView
@@ -66,6 +66,12 @@ class profile : AppCompatActivity() {
         }
     }
 
+    private val coverPickerLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        if (uri != null) {
+            uploadCoverPicture(uri)
+        }
+    }
+
     private val userBlogsList = mutableListOf<Blog>()
     private val savedBlogsList = mutableListOf<Blog>()
     private val displayedList = mutableListOf<Blog>()
@@ -78,12 +84,12 @@ class profile : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_profile)
 
+        ivProfileBanner = findViewById(R.id.ivProfileBanner)
+        btnChangeCover = findViewById(R.id.btnChangeCover)
         profileAvatar = findViewById(R.id.profileAvatar)
         nameText = findViewById(R.id.name)
         userHandleText = findViewById(R.id.tvUserHandle)
-        ageText = findViewById(R.id.age)
-        genderText = findViewById(R.id.gender)
-        addressText = findViewById(R.id.address)
+        userBioText = findViewById(R.id.tvUserBio)
         postsCountText = findViewById(R.id.tvPostsCount)
         followersCountText = findViewById(R.id.tvFollowersCount)
         followingCountText = findViewById(R.id.tvFollowingCount)
@@ -239,6 +245,11 @@ class profile : AppCompatActivity() {
             pfpPickerLauncher.launch("image/*")
         }
 
+        // Tap Cover button to change profile background image
+        btnChangeCover.setOnClickListener {
+            coverPickerLauncher.launch("image/*")
+        }
+
         // Open Settings Screen on clicking settings icon or Edit Profile
         val openSettings = View.OnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
@@ -307,20 +318,57 @@ class profile : AppCompatActivity() {
         )
     }
 
+    private fun uploadCoverPicture(uri: Uri) {
+        val uid = auth.currentUser?.uid ?: return
+        Toast.makeText(this, "Uploading cover background...", Toast.LENGTH_SHORT).show()
+
+        CloudinaryHelper.uploadImage(
+            imageUri = uri,
+            folder = "inkora/profile_covers",
+            onSuccess = { urlString ->
+                CloudinaryHelper.saveCoverPhotoToFirebase(
+                    uid = uid,
+                    imageUrl = urlString,
+                    db = db,
+                    onSuccess = {
+                        if (isFinishing || isDestroyed) return@saveCoverPhotoToFirebase
+                        ivProfileBanner.load(urlString) {
+                            crossfade(true)
+                        }
+                        Toast.makeText(this, "Profile background updated!", Toast.LENGTH_SHORT).show()
+                    },
+                    onFailure = { e ->
+                        if (isFinishing || isDestroyed) return@saveCoverPhotoToFirebase
+                        Toast.makeText(this, "Failed to save background URL: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                    }
+                )
+            },
+            onError = { errorMessage ->
+                if (isFinishing || isDestroyed) return@uploadImage
+                Toast.makeText(this, "Failed to upload background: $errorMessage", Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
+
     private fun loadUserProfile() {
         val uid = auth.currentUser?.uid ?: return
+        val source = inkora.preferredSource(this)
 
         db.collection("users").document(uid)
-            .get()
+            .get(source)
             .addOnSuccessListener { doc ->
                 if (doc.exists()) {
-                    nameText.text = doc.getString("name") ?: (auth.currentUser?.displayName ?: "User")
-                    val username = doc.getString("username") ?: (auth.currentUser?.email?.substringBefore("@") ?: "user")
+                    nameText.text = (doc.getString("name") ?: auth.currentUser?.displayName)
+                        ?.takeIf { it.isNotBlank() && !it.contains("@") } ?: "Creator"
+                    val username = doc.getString("username")?.takeIf { it.isNotBlank() && !it.contains("@") } ?: "user"
                     val bio = doc.getString("bio") ?: "Creator"
-                    userHandleText.text = if (bio.isNotEmpty()) "@$username • $bio" else "@$username"
-                    ageText.text = doc.get("age")?.toString() ?: "—"
-                    genderText.text = doc.getString("gender") ?: "Not specified"
-                    addressText.text = doc.getString("address") ?: "—"
+                    userHandleText.text = "@$username"
+                    if (bio.isNotEmpty()) {
+                        userBioText.visibility = View.VISIBLE
+                        userBioText.text = bio
+                    } else {
+                        userBioText.visibility = View.GONE
+                    }
 
                     val posts = doc.getLong("postsCount")
                     if (posts != null && userBlogsList.isEmpty()) {
@@ -337,13 +385,21 @@ class profile : AppCompatActivity() {
                             crossfade(true)
                         }
                     }
+
+                    val coverUrl = doc.getString("coverPhotoUrl") ?: ""
+                    if (coverUrl.isNotEmpty()) {
+                        ivProfileBanner.load(coverUrl) {
+                            crossfade(true)
+                        }
+                    }
                 } else {
-                    nameText.text = auth.currentUser?.displayName ?: "Inkora User"
-                    userHandleText.text = "@${auth.currentUser?.email?.substringBefore("@") ?: "user"}"
+                    nameText.text = auth.currentUser?.displayName?.takeIf { it.isNotBlank() && !it.contains("@") } ?: "Inkora User"
+                    userHandleText.text = "@user"
+                    userBioText.visibility = View.GONE
                 }
 
                 // Load following IDs
-                db.collection("users").document(uid).collection("following").get()
+                db.collection("users").document(uid).collection("following").get(source)
                     .addOnSuccessListener { followingSnap ->
                         followedAuthorIds.clear()
                         for (fDoc in followingSnap.documents) {
@@ -356,10 +412,11 @@ class profile : AppCompatActivity() {
 
     private fun loadUserBlogs() {
         val uid = auth.currentUser?.uid ?: return
+        val source = inkora.preferredSource(this)
 
         db.collection("blogs")
             .whereEqualTo("authorId", uid)
-            .get()
+            .get(source)
             .addOnSuccessListener { snap1 ->
                 val blogDocs = mutableMapOf<String, DocumentSnapshot>()
                 for (doc in snap1.documents) {
@@ -369,7 +426,7 @@ class profile : AppCompatActivity() {
                 // Also check legacy blogs with "uid" field
                 db.collection("blogs")
                     .whereEqualTo("uid", uid)
-                    .get()
+                    .get(source)
                     .addOnSuccessListener { snap2 ->
                         for (doc in snap2.documents) {
                             blogDocs[doc.id] = doc
@@ -383,7 +440,7 @@ class profile : AppCompatActivity() {
             .addOnFailureListener {
                 db.collection("blogs")
                     .whereEqualTo("uid", uid)
-                    .get()
+                    .get(source)
                     .addOnSuccessListener { snap2 ->
                         val blogDocs = snap2.documents.associateBy { it.id }
                         parseAndDisplayUserBlogs(blogDocs.values, uid)
@@ -402,7 +459,7 @@ class profile : AppCompatActivity() {
                 content = doc.getString("content") ?: "",
                 category = doc.getString("category") ?: "Tech",
                 imageUrl = doc.getString("imageUrl") ?: "",
-                author = doc.getString("author") ?: "You",
+                author = doc.getString("author")?.takeIf { it.isNotBlank() && !it.contains("@") } ?: "You",
                 authorId = uid,
                 authorPhotoUrl = doc.getString("authorPhotoUrl") ?: (auth.currentUser?.photoUrl?.toString() ?: ""),
                 likesCount = doc.getLong("likesCount") ?: likedBy.size.toLong(),
@@ -429,7 +486,8 @@ class profile : AppCompatActivity() {
 
     private fun loadSavedBlogs() {
         val uid = auth.currentUser?.uid ?: return
-        db.collection("users").document(uid).collection("saved_posts").get()
+        val source = inkora.preferredSource(this)
+        db.collection("users").document(uid).collection("saved_posts").get(source)
             .addOnSuccessListener { snap ->
                 savedBlogsList.clear()
                 val currentUid = auth.currentUser?.uid ?: ""
@@ -446,7 +504,7 @@ class profile : AppCompatActivity() {
                             content = doc.getString("content") ?: "",
                             category = doc.getString("category") ?: "Tech",
                             imageUrl = doc.getString("imageUrl") ?: "",
-                            author = doc.getString("author") ?: "Creator",
+                            author = doc.getString("author")?.takeIf { it.isNotBlank() && !it.contains("@") } ?: "Creator",
                             authorId = doc.getString("authorId") ?: "",
                             authorPhotoUrl = doc.getString("authorPhotoUrl") ?: "",
                             likesCount = doc.getLong("likesCount") ?: 0L,
@@ -477,7 +535,7 @@ class profile : AppCompatActivity() {
                                 content = bDoc.getString("content") ?: "",
                                 category = bDoc.getString("category") ?: "Tech",
                                 imageUrl = bDoc.getString("imageUrl") ?: "",
-                                author = bDoc.getString("author") ?: "Creator",
+                                author = bDoc.getString("author")?.takeIf { it.isNotBlank() && !it.contains("@") } ?: "Creator",
                                 authorId = bDoc.getString("authorId") ?: "",
                                 authorPhotoUrl = bDoc.getString("authorPhotoUrl") ?: "",
                                 likesCount = bDoc.getLong("likesCount") ?: 0L,
@@ -766,8 +824,8 @@ class profile : AppCompatActivity() {
                             val doc = task.result as? DocumentSnapshot
                             if (doc != null && doc.exists()) {
                                 val uid = doc.id
-                                val name = doc.getString("name") ?: "User"
-                                val username = doc.getString("username") ?: "creator"
+                                val name = doc.getString("name")?.takeIf { it.isNotBlank() && !it.contains("@") } ?: "User"
+                                val username = doc.getString("username")?.takeIf { it.isNotBlank() && !it.contains("@") } ?: "creator"
                                 val bio = doc.getString("bio") ?: ""
                                 val photoUrl = doc.getString("photoUrl") ?: doc.getString("pfpUrl") ?: ""
                                 val isFollowing = followedAuthorIds.contains(uid)

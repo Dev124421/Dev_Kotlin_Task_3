@@ -43,6 +43,7 @@ class add_data : AppCompatActivity() {
     private var currentImageUrl: String = ""
     private var authorPhotoUrl: String = ""
     private var cachedAuthorName: String = ""
+    private var cachedUsername: String = ""
 
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         if (uri != null) {
@@ -128,7 +129,10 @@ class add_data : AppCompatActivity() {
         db.collection("users").document(uid).get()
             .addOnSuccessListener { doc ->
                 if (doc.exists()) {
-                    cachedAuthorName = doc.getString("name") ?: auth.currentUser?.displayName ?: "Creator"
+                    cachedAuthorName = (doc.getString("name") ?: auth.currentUser?.displayName)
+                        ?.takeIf { it.isNotBlank() && !it.contains("@") } ?: "Creator"
+                    cachedUsername = doc.getString("username")
+                        ?.takeIf { it.isNotBlank() && !it.contains("@") } ?: ""
                     authorPhotoUrl = doc.getString("photoUrl") ?: doc.getString("pfpUrl") ?: auth.currentUser?.photoUrl?.toString() ?: ""
                 }
             }
@@ -178,6 +182,10 @@ class add_data : AppCompatActivity() {
 
         // If a new local image was selected, upload it to Cloudinary first
         if (selectedImageUri != null) {
+            if (!inkora.isOnline(this)) {
+                Toast.makeText(this, "Internet connection is required to upload a cover image", Toast.LENGTH_SHORT).show()
+                return
+            }
             btnPublish.isEnabled = false
             btnPublish.text = "Uploading cover image..."
             pbUpload.visibility = View.VISIBLE
@@ -206,10 +214,11 @@ class add_data : AppCompatActivity() {
 
     private fun commitPostToFirestore(title: String, content: String, imageUrl: String) {
         val user = auth.currentUser
-        val authorName = if (cachedAuthorName.isNotEmpty()) {
-            cachedAuthorName
-        } else {
-            user?.displayName ?: user?.email?.substringBefore("@") ?: "Creator"
+        val authorName = when {
+            cachedAuthorName.isNotEmpty() -> cachedAuthorName
+            !user?.displayName.isNullOrBlank() -> user?.displayName?.takeIf { !it.contains("@") } ?: "Creator"
+            cachedUsername.isNotEmpty() -> cachedUsername
+            else -> "Creator"
         }
         val authorId = user?.uid ?: ""
         val authorPfp = if (authorPhotoUrl.isNotEmpty()) {
@@ -232,10 +241,20 @@ class add_data : AppCompatActivity() {
             "timestamp" to System.currentTimeMillis()
         )
 
+        val isOffline = !inkora.isOnline(this)
+
         if (editingDocId != null) {
             // Update existing post
-            db.collection("blogs").document(editingDocId!!)
+            val updateTask = db.collection("blogs").document(editingDocId!!)
                 .update(postMap as Map<String, Any>)
+
+            if (isOffline) {
+                Toast.makeText(this, "Changes saved offline — will sync when online", Toast.LENGTH_SHORT).show()
+                finish()
+                return
+            }
+
+            updateTask
                 .addOnSuccessListener {
                     Toast.makeText(this, "Post updated successfully!", Toast.LENGTH_SHORT).show()
                     finish()
@@ -251,12 +270,22 @@ class add_data : AppCompatActivity() {
             postMap["commentsCount"] = 0L
             postMap["likedBy"] = emptyList<String>()
 
-            db.collection("blogs").add(postMap)
+            val newDocRef = db.collection("blogs").document()
+            val createTask = newDocRef.set(postMap)
+
+            if (authorId.isNotEmpty()) {
+                db.collection("users").document(authorId)
+                    .set(mapOf("postsCount" to FieldValue.increment(1)), SetOptions.merge())
+            }
+
+            if (isOffline) {
+                Toast.makeText(this, "Story saved offline — will publish when back online", Toast.LENGTH_SHORT).show()
+                finish()
+                return
+            }
+
+            createTask
                 .addOnSuccessListener {
-                    if (authorId.isNotEmpty()) {
-                        db.collection("users").document(authorId)
-                            .set(mapOf("postsCount" to FieldValue.increment(1)), SetOptions.merge())
-                    }
                     Toast.makeText(this, "Story published successfully!", Toast.LENGTH_SHORT).show()
                     finish()
                 }

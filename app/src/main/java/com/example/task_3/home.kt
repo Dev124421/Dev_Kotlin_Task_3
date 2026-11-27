@@ -19,23 +19,31 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
+import com.google.firebase.firestore.Source
 
 class home : AppCompatActivity() {
 
     private val allBlogs = mutableListOf<Blog>()
     private val displayedBlogs = mutableListOf<Blog>()
+    private val savedBlogIds = mutableSetOf<String>()
     private val followedAuthorIds = mutableSetOf<String>()
     private lateinit var adapter: BlogRecyclerAdapter
 
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
 
+    private var blogsListener: ListenerRegistration? = null
+    private var savedListener: ListenerRegistration? = null
+    private var followingListener: ListenerRegistration? = null
+
     private lateinit var rvFeed: RecyclerView
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     private lateinit var pbLoading: ProgressBar
     private lateinit var tvEmpty: TextView
+    private lateinit var tvOfflineBanner: TextView
     private lateinit var bottomNav: BottomNavigationView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,6 +54,7 @@ class home : AppCompatActivity() {
         swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout)
         pbLoading = findViewById(R.id.pbFeedLoading)
         tvEmpty = findViewById(R.id.tvEmptyFeed)
+        tvOfflineBanner = findViewById(R.id.tvOfflineBanner)
         bottomNav = findViewById(R.id.bottom_nav)
 
         bottomNav.selectedItemId = R.id.nav_home
@@ -57,16 +66,24 @@ class home : AppCompatActivity() {
         swipeRefreshLayout.setColorSchemeResources(R.color.primary_red)
         swipeRefreshLayout.setProgressBackgroundColorSchemeResource(R.color.card_surface)
         swipeRefreshLayout.setOnRefreshListener {
-            fetchBlogs(isSwipeRefresh = true)
+            refreshFromServer()
         }
+    }
 
-        fetchBlogs()
+    override fun onStart() {
+        super.onStart()
+        attachFeedListeners()
     }
 
     override fun onResume() {
         super.onResume()
         bottomNav.selectedItemId = R.id.nav_home
-        fetchBlogs()
+        updateOfflineBanner(isFromCache = !inkora.isOnline(this))
+    }
+
+    override fun onStop() {
+        super.onStop()
+        detachFeedListeners()
     }
 
     private fun setupRecyclerView() {
@@ -124,70 +141,107 @@ class home : AppCompatActivity() {
         rvFeed.adapter = adapter
     }
 
-    private fun fetchBlogs(isSwipeRefresh: Boolean = false) {
-        if (!isSwipeRefresh) {
+    private fun attachFeedListeners() {
+        if (blogsListener != null) return
+        if (allBlogs.isEmpty()) {
             pbLoading.visibility = View.VISIBLE
         }
-        db.collection("blogs")
+
+        val currentUid = auth.currentUser?.uid ?: ""
+
+        blogsListener = db.collection("blogs")
             .orderBy("timestamp", Query.Direction.DESCENDING)
-            .get()
-            .addOnSuccessListener { result ->
+            .addSnapshotListener { result, error ->
                 pbLoading.visibility = View.GONE
                 swipeRefreshLayout.isRefreshing = false
-                allBlogs.clear()
-                val currentUid = auth.currentUser?.uid ?: ""
-                for (doc in result) {
-                    val likedBy = (doc.get("likedBy") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
-                    val isLiked = currentUid.isNotEmpty() && likedBy.contains(currentUid)
-                    val blog = Blog(
-                        id = doc.id,
-                        title = doc.getString("title") ?: "",
-                        content = doc.getString("content") ?: "",
-                        category = doc.getString("category") ?: "Tech",
-                        imageUrl = doc.getString("imageUrl") ?: "",
-                        author = doc.getString("author") ?: "Anonymous",
-                        authorId = doc.getString("authorId") ?: doc.getString("uid") ?: "",
-                        authorPhotoUrl = doc.getString("authorPhotoUrl") ?: "",
-                        likesCount = doc.getLong("likesCount") ?: likedBy.size.toLong(),
-                        commentsCount = doc.getLong("commentsCount") ?: 0L,
-                        timestamp = doc.getLong("timestamp") ?: System.currentTimeMillis(),
-                        likedBy = likedBy,
-                        isLiked = isLiked
-                    )
-                    allBlogs.add(blog)
+
+                if (error != null) {
+                    if (allBlogs.isEmpty()) {
+                        Toast.makeText(this, "Failed to load: ${error.localizedMessage}", Toast.LENGTH_SHORT).show()
+                    }
+                    return@addSnapshotListener
                 }
 
-                if (currentUid.isNotEmpty()) {
-                    db.collection("users").document(currentUid).collection("saved_posts").get()
-                        .addOnSuccessListener { savedSnap ->
-                            val savedIds = savedSnap.documents.map { it.id }.toSet()
-                            allBlogs.forEach { it.isSaved = it.id in savedIds }
-
-                            db.collection("users").document(currentUid).collection("following").get()
-                                .addOnSuccessListener { followingSnap ->
-                                    followedAuthorIds.clear()
-                                    for (doc in followingSnap.documents) {
-                                        followedAuthorIds.add(doc.id)
-                                    }
-                                    adapter.updateFollowedUsers(followedAuthorIds)
-                                    filterAndDisplayBlogs()
-                                }
-                                .addOnFailureListener {
-                                    filterAndDisplayBlogs()
-                                }
-                        }
-                        .addOnFailureListener {
-                            filterAndDisplayBlogs()
-                        }
-                } else {
+                if (result != null) {
+                    updateOfflineBanner(isFromCache = result.metadata.isFromCache && !inkora.isOnline(this))
+                    allBlogs.clear()
+                    for (doc in result.documents) {
+                        val likedBy = (doc.get("likedBy") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+                        val isLiked = currentUid.isNotEmpty() && likedBy.contains(currentUid)
+                        val blog = Blog(
+                            id = doc.id,
+                            title = doc.getString("title") ?: "",
+                            content = doc.getString("content") ?: "",
+                            category = doc.getString("category") ?: "Tech",
+                            imageUrl = doc.getString("imageUrl") ?: "",
+                            author = doc.getString("author")?.takeIf { it.isNotBlank() && !it.contains("@") } ?: "Anonymous",
+                            authorId = doc.getString("authorId") ?: doc.getString("uid") ?: "",
+                            authorPhotoUrl = doc.getString("authorPhotoUrl") ?: "",
+                            likesCount = doc.getLong("likesCount") ?: likedBy.size.toLong(),
+                            commentsCount = doc.getLong("commentsCount") ?: 0L,
+                            timestamp = doc.getLong("timestamp") ?: System.currentTimeMillis(),
+                            likedBy = likedBy,
+                            isLiked = isLiked,
+                            isSaved = doc.id in savedBlogIds
+                        )
+                        allBlogs.add(blog)
+                    }
                     filterAndDisplayBlogs()
                 }
             }
-            .addOnFailureListener {
-                pbLoading.visibility = View.GONE
+
+        if (currentUid.isNotEmpty()) {
+            savedListener = db.collection("users").document(currentUid).collection("saved_posts")
+                .addSnapshotListener { savedSnap, _ ->
+                    if (savedSnap != null) {
+                        savedBlogIds.clear()
+                        savedBlogIds.addAll(savedSnap.documents.map { it.id })
+                        allBlogs.forEach { it.isSaved = it.id in savedBlogIds }
+                        filterAndDisplayBlogs()
+                    }
+                }
+
+            followingListener = db.collection("users").document(currentUid).collection("following")
+                .addSnapshotListener { followingSnap, _ ->
+                    if (followingSnap != null) {
+                        followedAuthorIds.clear()
+                        for (doc in followingSnap.documents) {
+                            followedAuthorIds.add(doc.id)
+                        }
+                        adapter.updateFollowedUsers(followedAuthorIds)
+                    }
+                }
+        }
+    }
+
+    private fun detachFeedListeners() {
+        blogsListener?.remove()
+        blogsListener = null
+        savedListener?.remove()
+        savedListener = null
+        followingListener?.remove()
+        followingListener = null
+    }
+
+    private fun refreshFromServer() {
+        if (!inkora.isOnline(this)) {
+            swipeRefreshLayout.isRefreshing = false
+            updateOfflineBanner(isFromCache = true)
+            Toast.makeText(this, "Offline — showing cached stories", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        db.collection("blogs")
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .get(Source.SERVER)
+            .addOnCompleteListener {
                 swipeRefreshLayout.isRefreshing = false
-                Toast.makeText(this, "Failed to load: ${it.localizedMessage}", Toast.LENGTH_SHORT).show()
+                updateOfflineBanner(isFromCache = !inkora.isOnline(this))
             }
+    }
+
+    private fun updateOfflineBanner(isFromCache: Boolean) {
+        tvOfflineBanner.visibility = if (isFromCache) View.VISIBLE else View.GONE
     }
 
     private fun filterAndDisplayBlogs() {
@@ -461,7 +515,7 @@ class home : AppCompatActivity() {
         bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_home -> {
-                    fetchBlogs()
+                    refreshFromServer()
                     true
                 }
                 R.id.nav_discover -> {

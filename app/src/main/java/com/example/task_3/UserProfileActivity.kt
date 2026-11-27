@@ -36,9 +36,10 @@ class UserProfileActivity : AppCompatActivity() {
 
     private lateinit var btnBack: TextView
     private lateinit var tvTopBarTitle: TextView
+    private lateinit var ivBanner: ImageView
     private lateinit var ivAvatar: ShapeableImageView
     private lateinit var tvName: TextView
-    private lateinit var tvHandle: TextView
+    private lateinit var tvBio: TextView
     private lateinit var btnFollow: AppCompatButton
 
     private lateinit var layoutPosts: View
@@ -98,9 +99,10 @@ class UserProfileActivity : AppCompatActivity() {
     private fun bindViews() {
         btnBack = findViewById(R.id.btnBack)
         tvTopBarTitle = findViewById(R.id.tvTopBarTitle)
+        ivBanner = findViewById(R.id.ivUserProfileBanner)
         ivAvatar = findViewById(R.id.ivUserProfileAvatar)
         tvName = findViewById(R.id.tvUserName)
-        tvHandle = findViewById(R.id.tvUserHandle)
+        tvBio = findViewById(R.id.tvUserBio)
         btnFollow = findViewById(R.id.btnUserProfileFollow)
 
         layoutPosts = findViewById(R.id.layoutUserPosts)
@@ -116,8 +118,9 @@ class UserProfileActivity : AppCompatActivity() {
         rvUserBlogs = findViewById(R.id.rvUserBlogs)
         scrollView = findViewById(R.id.userProfileScrollView)
 
-        tvTopBarTitle.text = targetUserName.ifEmpty { "Creator Profile" }
-        tvName.text = targetUserName.ifEmpty { "Loading..." }
+        val safeInitialName = targetUserName.takeIf { it.isNotBlank() && !it.contains("@") } ?: ""
+        tvTopBarTitle.text = safeInitialName.ifEmpty { "Creator Profile" }
+        tvName.text = safeInitialName.ifEmpty { "Loading..." }
     }
 
     private fun setupRecyclerView() {
@@ -175,7 +178,8 @@ class UserProfileActivity : AppCompatActivity() {
 
         // Tap Posts to smooth scroll down to stories
         layoutPosts.setOnClickListener {
-            scrollView.smoothScrollTo(0, rvUserBlogs.top)
+            val heroBottom = findViewById<View>(R.id.userHeroContainer).bottom
+            scrollView.smoothScrollTo(0, heroBottom)
         }
     }
 
@@ -199,7 +203,8 @@ class UserProfileActivity : AppCompatActivity() {
             return
         }
 
-        db.collection("users").document(currentUid).collection("following").get()
+        db.collection("users").document(currentUid).collection("following")
+            .get(inkora.preferredSource(this))
             .addOnSuccessListener { snapshot ->
                 followedAuthorIds.clear()
                 for (doc in snapshot.documents) {
@@ -215,20 +220,32 @@ class UserProfileActivity : AppCompatActivity() {
     }
 
     private fun loadUserProfile() {
-        db.collection("users").document(targetUserId).get()
+        db.collection("users").document(targetUserId).get(inkora.preferredSource(this))
             .addOnSuccessListener { doc ->
                 if (doc.exists()) {
-                    val name = doc.getString("name") ?: targetUserName.ifEmpty { "Creator" }
-                    val username = doc.getString("username") ?: "creator"
+                    val name = (doc.getString("name") ?: targetUserName)
+                        .takeIf { it.isNotBlank() && !it.contains("@") } ?: "Creator"
                     val bio = doc.getString("bio") ?: ""
                     val photoUrl = doc.getString("photoUrl") ?: doc.getString("pfpUrl") ?: ""
+                    val coverUrl = doc.getString("coverPhotoUrl") ?: ""
 
                     tvName.text = name
                     tvTopBarTitle.text = name
-                    tvHandle.text = if (bio.isNotEmpty()) "@$username • $bio" else "@$username"
+                    if (bio.isNotEmpty()) {
+                        tvBio.visibility = View.VISIBLE
+                        tvBio.text = bio
+                    } else {
+                        tvBio.visibility = View.GONE
+                    }
 
                     if (photoUrl.isNotEmpty()) {
                         ivAvatar.load(photoUrl) {
+                            crossfade(true)
+                        }
+                    }
+
+                    if (coverUrl.isNotEmpty()) {
+                        ivBanner.load(coverUrl) {
                             crossfade(true)
                         }
                     }
@@ -245,9 +262,10 @@ class UserProfileActivity : AppCompatActivity() {
         tvNoPosts.visibility = View.GONE
         rvUserBlogs.visibility = View.GONE
 
+        val source = inkora.preferredSource(this)
         db.collection("blogs")
             .whereEqualTo("authorId", targetUserId)
-            .get()
+            .get(source)
             .addOnSuccessListener { snap1 ->
                 val blogDocs = mutableMapOf<String, DocumentSnapshot>()
                 for (doc in snap1.documents) {
@@ -257,7 +275,7 @@ class UserProfileActivity : AppCompatActivity() {
                 // Check legacy posts where author ID field was "uid"
                 db.collection("blogs")
                     .whereEqualTo("uid", targetUserId)
-                    .get()
+                    .get(source)
                     .addOnSuccessListener { snap2 ->
                         for (doc in snap2.documents) {
                             blogDocs[doc.id] = doc
@@ -289,7 +307,8 @@ class UserProfileActivity : AppCompatActivity() {
                 content = doc.getString("content") ?: "",
                 category = doc.getString("category") ?: "Tech",
                 imageUrl = doc.getString("imageUrl") ?: "",
-                author = doc.getString("author") ?: targetUserName.ifEmpty { "Creator" },
+                author = (doc.getString("author") ?: targetUserName)
+                    .takeIf { it.isNotBlank() && !it.contains("@") } ?: "Creator",
                 authorId = targetUserId,
                 authorPhotoUrl = doc.getString("authorPhotoUrl") ?: "",
                 likesCount = doc.getLong("likesCount") ?: likedBy.size.toLong(),
@@ -571,8 +590,8 @@ class UserProfileActivity : AppCompatActivity() {
                             val doc = task.result as? DocumentSnapshot
                             if (doc != null && doc.exists()) {
                                 val uid = doc.id
-                                val name = doc.getString("name") ?: "User"
-                                val username = doc.getString("username") ?: "creator"
+                                val name = doc.getString("name")?.takeIf { it.isNotBlank() && !it.contains("@") } ?: "User"
+                                val username = doc.getString("username")?.takeIf { it.isNotBlank() && !it.contains("@") } ?: "creator"
                                 val bio = doc.getString("bio") ?: ""
                                 val photoUrl = doc.getString("photoUrl") ?: doc.getString("pfpUrl") ?: ""
                                 val isFollowing = followedAuthorIds.contains(uid)
