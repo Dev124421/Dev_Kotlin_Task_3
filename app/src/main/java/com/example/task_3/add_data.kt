@@ -18,8 +18,6 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
-import com.google.firebase.storage.FirebaseStorage
-import java.util.UUID
 
 class add_data : AppCompatActivity() {
 
@@ -38,7 +36,6 @@ class add_data : AppCompatActivity() {
 
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
-    private val storage = FirebaseStorage.getInstance()
 
     private var selectedCategory = "Tech"
     private var editingDocId: String? = null
@@ -179,26 +176,29 @@ class add_data : AppCompatActivity() {
             return
         }
 
-        // If a new local image was selected, upload it to Firebase Storage first
+        // If a new local image was selected, upload it to Cloudinary first
         if (selectedImageUri != null) {
             btnPublish.isEnabled = false
             btnPublish.text = "Uploading cover image..."
             pbUpload.visibility = View.VISIBLE
 
-            val coverRef = storage.reference.child("blog_covers/${UUID.randomUUID()}.jpg")
-            coverRef.putFile(selectedImageUri!!)
-                .continueWithTask { coverRef.downloadUrl }
-                .addOnSuccessListener { downloadUrl ->
+            CloudinaryHelper.uploadImage(
+                imageUri = selectedImageUri!!,
+                folder = "inkora/blog_covers",
+                onSuccess = { downloadUrl ->
+                    if (isFinishing || isDestroyed) return@uploadImage
                     pbUpload.visibility = View.GONE
-                    currentImageUrl = downloadUrl.toString()
+                    currentImageUrl = downloadUrl
                     commitPostToFirestore(title, content, currentImageUrl)
-                }
-                .addOnFailureListener { e ->
+                },
+                onError = { errorMessage ->
+                    if (isFinishing || isDestroyed) return@uploadImage
                     pbUpload.visibility = View.GONE
                     btnPublish.isEnabled = true
                     btnPublish.text = if (editingDocId != null) "Save Changes  →" else "Publish Story  →"
-                    Toast.makeText(this, "Cover upload failed: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Cover upload failed: $errorMessage", Toast.LENGTH_SHORT).show()
                 }
+            )
         } else {
             commitPostToFirestore(title, content, currentImageUrl)
         }

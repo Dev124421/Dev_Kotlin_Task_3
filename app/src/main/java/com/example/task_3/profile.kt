@@ -27,12 +27,10 @@ import com.google.android.gms.tasks.Tasks
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
-import com.google.firebase.storage.FirebaseStorage
 
 class profile : AppCompatActivity() {
 
@@ -61,7 +59,6 @@ class profile : AppCompatActivity() {
 
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
-    private val storage = FirebaseStorage.getInstance()
 
     private val pfpPickerLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         if (uri != null) {
@@ -281,26 +278,33 @@ class profile : AppCompatActivity() {
         val uid = auth.currentUser?.uid ?: return
         Toast.makeText(this, "Uploading new avatar...", Toast.LENGTH_SHORT).show()
 
-        val storageRef = storage.reference.child("profile_pictures/$uid.jpg")
-        storageRef.putFile(uri)
-            .continueWithTask { storageRef.downloadUrl }
-            .addOnSuccessListener { downloadUrl ->
-                val urlString = downloadUrl.toString()
-                db.collection("users").document(uid).set(mapOf("photoUrl" to urlString), SetOptions.merge())
-
-                val profileUpdates = UserProfileChangeRequest.Builder()
-                    .setPhotoUri(downloadUrl)
-                    .build()
-                auth.currentUser?.updateProfile(profileUpdates)
-
-                profileAvatar.load(urlString) {
-                    crossfade(true)
-                }
-                Toast.makeText(this, "Profile picture updated! 📸", Toast.LENGTH_SHORT).show()
+        CloudinaryHelper.uploadImage(
+            imageUri = uri,
+            folder = "inkora/profile_pictures",
+            onSuccess = { urlString ->
+                CloudinaryHelper.saveProfilePhotoToFirebase(
+                    uid = uid,
+                    imageUrl = urlString,
+                    auth = auth,
+                    db = db,
+                    onSuccess = {
+                        if (isFinishing || isDestroyed) return@saveProfilePhotoToFirebase
+                        profileAvatar.load(urlString) {
+                            crossfade(true)
+                        }
+                        Toast.makeText(this, "Profile picture updated! 📸", Toast.LENGTH_SHORT).show()
+                    },
+                    onFailure = { e ->
+                        if (isFinishing || isDestroyed) return@saveProfilePhotoToFirebase
+                        Toast.makeText(this, "Failed to save avatar URL: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                    }
+                )
+            },
+            onError = { errorMessage ->
+                if (isFinishing || isDestroyed) return@uploadImage
+                Toast.makeText(this, "Failed to upload: $errorMessage", Toast.LENGTH_SHORT).show()
             }
-            .addOnFailureListener { e ->
-                Toast.makeText(this, "Failed to upload: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
-            }
+        )
     }
 
     private fun loadUserProfile() {
