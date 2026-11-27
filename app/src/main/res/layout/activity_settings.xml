@@ -2,15 +2,12 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    android:background="@color/primary_background"
-    tools:context=".SettingsActivity">
+    android:background="@color/primary_background">
 
-    <!-- Top Header Bar -->
     <LinearLayout
         android:id="@+id/topBar"
         android:layout_width="match_parent"
@@ -65,7 +62,6 @@
             android:paddingTop="16dp"
             android:paddingBottom="40dp">
 
-            <!-- Profile Picture & Background Cover Section -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -74,7 +70,6 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <!-- Cover Background Preview -->
                 <FrameLayout
                     android:layout_width="match_parent"
                     android:layout_height="110dp"
@@ -153,7 +148,6 @@
                     android:focusable="true" />
             </LinearLayout>
 
-            <!-- Account Details Card -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -172,7 +166,6 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <!-- Full Name -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -193,7 +186,6 @@
                     android:textColorHint="@color/secondary_text"
                     android:textSize="14sp" />
 
-                <!-- Username -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -215,29 +207,46 @@
                     android:textColorHint="@color/secondary_text"
                     android:textSize="14sp" />
 
-                <!-- Bio -->
-                <TextView
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
-                    android:text="Bio"
-                    android:textColor="@color/secondary_text"
-                    android:textSize="12sp" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Profile Description"
+                        android:textColor="@color/secondary_text"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/tvBioCharCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0/180"
+                        android:textColor="@color/secondary_text"
+                        android:textSize="11sp" />
+                </LinearLayout>
 
                 <EditText
                     android:id="@+id/etSettingsBio"
                     android:layout_width="match_parent"
-                    android:layout_height="48dp"
+                    android:layout_height="100dp"
                     android:layout_marginTop="6dp"
                     android:background="@drawable/input_box"
-                    android:hint="A short bio about you"
-                    android:inputType="textCapSentences"
-                    android:paddingHorizontal="14dp"
+                    android:gravity="top|start"
+                    android:hint="Write a description about yourself (shown on your public profile)..."
+                    android:inputType="textMultiLine|textCapSentences"
+                    android:maxLength="180"
+                    android:maxLines="4"
+                    android:padding="14dp"
                     android:textColor="@color/primary_text"
                     android:textColorHint="@color/secondary_text"
                     android:textSize="14sp" />
 
-                <!-- Age & Gender in row -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -301,7 +310,6 @@
                     </LinearLayout>
                 </LinearLayout>
 
-                <!-- Address -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -323,7 +331,6 @@
                     android:textColorHint="@color/secondary_text"
                     android:textSize="14sp" />
 
-                <!-- Save Button -->
                 <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/btnSaveProfile"
                     android:layout_width="match_parent"
@@ -337,7 +344,6 @@
                     android:textStyle="bold" />
             </LinearLayout>
 
-            <!-- Legal & Information Section -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -355,7 +361,6 @@
                 android:background="@drawable/bg_card_dark"
                 android:orientation="vertical">
 
-                <!-- Terms & Conditions Option -->
                 <LinearLayout
                     android:id="@+id/btnTerms"
                     android:layout_width="match_parent"
@@ -409,7 +414,6 @@
                     android:layout_height="1dp"
                     android:background="@color/secondary_background" />
 
-                <!-- Privacy Policy Option -->
                 <LinearLayout
                     android:id="@+id/btnPrivacy"
                     android:layout_width="match_parent"
@@ -463,7 +467,6 @@
                     android:layout_height="1dp"
                     android:background="@color/secondary_background" />
 
-                <!-- About Option -->
                 <LinearLayout
                     android:id="@+id/btnAbout"
                     android:layout_width="match_parent"
@@ -513,7 +516,6 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Logout Section -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -525,7 +527,6 @@
                 android:textStyle="bold"
                 android:letterSpacing="0.06" />
 
-            <!-- Professional Logout Card Button -->
             <LinearLayout
                 android:id="@+id/btnLogout"
                 android:layout_width="match_parent"

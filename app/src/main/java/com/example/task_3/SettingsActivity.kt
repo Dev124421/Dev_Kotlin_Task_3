@@ -3,6 +3,8 @@ package com.example.task_3
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
@@ -32,6 +34,7 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var etSettingsName: EditText
     private lateinit var etSettingsUsername: EditText
     private lateinit var etSettingsBio: EditText
+    private lateinit var tvBioCharCount: TextView
     private lateinit var etSettingsAge: EditText
     private lateinit var etSettingsGender: EditText
     private lateinit var etSettingsAddress: EditText
@@ -74,7 +77,16 @@ class SettingsActivity : AppCompatActivity() {
         etSettingsName = findViewById(R.id.etSettingsName)
         etSettingsUsername = findViewById(R.id.etSettingsUsername)
         etSettingsBio = findViewById(R.id.etSettingsBio)
+        tvBioCharCount = findViewById(R.id.tvBioCharCount)
         etSettingsAge = findViewById(R.id.etSettingsAge)
+
+        etSettingsBio.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                tvBioCharCount.text = "${s?.length ?: 0}/180"
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
         etSettingsGender = findViewById(R.id.etSettingsGender)
         etSettingsAddress = findViewById(R.id.etSettingsAddress)
         btnSaveProfile = findViewById(R.id.btnSaveProfile)
@@ -129,7 +141,7 @@ class SettingsActivity : AppCompatActivity() {
     private fun loadCurrentUserSettings() {
         val uid = auth.currentUser?.uid ?: return
 
-        db.collection("users").document(uid).get()
+        db.collection("users").document(uid).get(inkora.preferredSource(this))
             .addOnSuccessListener { doc ->
                 if (doc.exists()) {
                     etSettingsName.setText(doc.getString("name") ?: "")

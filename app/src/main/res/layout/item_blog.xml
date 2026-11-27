@@ -9,14 +9,12 @@
     android:background="@drawable/bg_card_dark"
     android:padding="16dp">
 
-    <!-- Header: Author info & options -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
-        <!-- Avatar Placeholder with red active dot -->
         <FrameLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content">
@@ -29,7 +27,6 @@
                 android:background="@drawable/bg_avatar_placeholder"
                 app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full" />
 
-            <!-- Active Red Dot -->
             <View
                 android:layout_width="8dp"
                 android:layout_height="8dp"
@@ -63,7 +60,6 @@
                 android:textSize="11sp" />
         </LinearLayout>
 
-        <!-- Quick Follow Button for Author -->
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnFollowAuthor"
             android:layout_width="wrap_content"
@@ -91,7 +87,6 @@
             android:textSize="20sp" />
     </LinearLayout>
 
-    <!-- Cover Image Area -->
     <FrameLayout
         android:id="@+id/coverImageContainer"
         android:layout_width="match_parent"
@@ -131,7 +126,6 @@
             android:textStyle="bold" />
     </FrameLayout>
 
-    <!-- Inline Category Pill for stories without image -->
     <TextView
         android:id="@+id/tvBlogCategoryInline"
         android:layout_width="wrap_content"
@@ -146,7 +140,6 @@
         android:textStyle="bold"
         android:visibility="gone" />
 
-    <!-- Blog Title -->
     <TextView
         android:id="@+id/tvBlogTitle"
         android:layout_width="match_parent"
@@ -158,7 +151,6 @@
         android:textStyle="bold"
         android:lineSpacingExtra="2dp" />
 
-    <!-- Blog Snippet -->
     <TextView
         android:id="@+id/tvBlogContent"
         android:layout_width="match_parent"
@@ -171,7 +163,6 @@
         android:textSize="13sp"
         android:lineSpacingExtra="2dp" />
 
-    <!-- Divider -->
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
@@ -179,14 +170,12 @@
         android:layout_marginBottom="10dp"
         android:background="@color/secondary_background" />
 
-    <!-- Actions Footer: Like, Comment, Save, Edit, Delete -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
-        <!-- Like (in Primary Red) -->
         <LinearLayout
             android:id="@+id/layoutLike"
             android:layout_width="wrap_content"
@@ -213,7 +202,6 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Comment -->
         <LinearLayout
             android:id="@+id/layoutComment"
             android:layout_width="wrap_content"
@@ -239,7 +227,6 @@
                 android:textSize="12sp" />
         </LinearLayout>
 
-        <!-- Save -->
         <LinearLayout
             android:id="@+id/layoutSave"
             android:layout_width="wrap_content"
@@ -271,7 +258,6 @@
             android:layout_height="1dp"
             android:layout_weight="1" />
 
-        <!-- Edit Button (Only visible to Author) -->
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnEdit"
             style="@style/Widget.MaterialComponents.Button.TextButton"
@@ -285,7 +271,6 @@
             android:textStyle="bold"
             android:visibility="gone" />
 
-        <!-- Delete Button (Only visible to Author) -->
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnDelete"
             style="@style/Widget.MaterialComponents.Button.TextButton"

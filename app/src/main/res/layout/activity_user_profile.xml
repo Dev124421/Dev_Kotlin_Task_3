@@ -2,14 +2,12 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
     android:background="@color/primary_background">
 
-    <!-- Scrollable Content -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/userProfileScrollView"
         android:layout_width="match_parent"
@@ -24,26 +22,22 @@
             android:orientation="vertical"
             android:paddingBottom="48dp">
 
-            <!-- Hero Header with Background Image + Bottom Fade before Stories -->
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/userHeroContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <!-- Creator Background Banner Image -->
                 <ImageView
                     android:id="@+id/ivUserProfileBanner"
                     android:layout_width="0dp"
                     android:layout_height="0dp"
                     android:background="@drawable/bg_profile_banner_default"
-                    android:contentDescription="Creator Background Banner"
                     android:scaleType="centerCrop"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent" />
 
-                <!-- Dark Readability Scrim & Bottom Fade into primary_background -->
                 <View
                     android:layout_width="0dp"
                     android:layout_height="0dp"
@@ -53,7 +47,6 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent" />
 
-                <!-- Foreground Creator Profile Info -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -66,7 +59,6 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent">
 
-                    <!-- Top Bar with Back Button, Title, Follow Button -->
                     <LinearLayout
                         android:id="@+id/topBar"
                         android:layout_width="match_parent"
@@ -114,7 +106,6 @@
                             android:textStyle="bold" />
                     </LinearLayout>
 
-                    <!-- Split Profile Row: Avatar Left | Details & Counts Right -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -122,7 +113,6 @@
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
-                        <!-- Left: Circular Avatar with Ring + Red Active Dot -->
                         <FrameLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content">
@@ -147,7 +137,6 @@
                                 android:background="@drawable/bg_primary_button" />
                         </FrameLayout>
 
-                        <!-- Right: Name, Username, Description, Stats -->
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
@@ -179,14 +168,12 @@
                                 android:textSize="13sp"
                                 android:visibility="gone" />
 
-                            <!-- Inline Stats Row: Posts | Followers | Following -->
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="12dp"
                                 android:orientation="horizontal">
 
-                                <!-- Posts -->
                                 <LinearLayout
                                     android:id="@+id/layoutUserPosts"
                                     android:layout_width="0dp"
@@ -215,7 +202,6 @@
                                         android:textSize="11sp" />
                                 </LinearLayout>
 
-                                <!-- Followers -->
                                 <LinearLayout
                                     android:id="@+id/layoutUserFollowers"
                                     android:layout_width="0dp"
@@ -244,7 +230,6 @@
                                         android:textSize="11sp" />
                                 </LinearLayout>
 
-                                <!-- Following -->
                                 <LinearLayout
                                     android:id="@+id/layoutUserFollowing"
                                     android:layout_width="0dp"
@@ -279,7 +264,6 @@
                 </LinearLayout>
             </androidx.constraintlayout.widget.ConstraintLayout>
 
-            <!-- Stories Section (On clean #080F24 background below banner fade) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -288,7 +272,6 @@
                 android:orientation="vertical"
                 android:paddingHorizontal="20dp">
 
-                <!-- Stories Header Section -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="44dp"
@@ -324,7 +307,6 @@
                     android:layout_marginBottom="12dp"
                     android:background="@color/secondary_background" />
 
-                <!-- Loading Indicator for Creator's Blogs -->
                 <ProgressBar
                     android:id="@+id/pbUserBlogsLoading"
                     android:layout_width="32dp"
@@ -332,7 +314,6 @@
                     android:layout_marginTop="16dp"
                     android:indeterminateTint="@color/primary_red" />
 
-                <!-- Empty State for Creator's Blogs -->
                 <TextView
                     android:id="@+id/tvUserNoPosts"
                     android:layout_width="wrap_content"
@@ -343,7 +324,6 @@
                     android:textSize="13sp"
                     android:visibility="gone" />
 
-                <!-- Creator's Stories RecyclerView -->
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvUserBlogs"
                     android:layout_width="match_parent"

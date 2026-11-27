@@ -34,8 +34,8 @@ import com.google.firebase.firestore.SetOptions
 
 class profile : AppCompatActivity() {
 
+    private lateinit var profileHeroContainer: View
     private lateinit var ivProfileBanner: ImageView
-    private lateinit var btnChangeCover: TextView
     private lateinit var profileAvatar: ImageView
     private lateinit var nameText: TextView
     private lateinit var userHandleText: TextView
@@ -84,8 +84,8 @@ class profile : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_profile)
 
+        profileHeroContainer = findViewById(R.id.profileHeroContainer)
         ivProfileBanner = findViewById(R.id.ivProfileBanner)
-        btnChangeCover = findViewById(R.id.btnChangeCover)
         profileAvatar = findViewById(R.id.profileAvatar)
         nameText = findViewById(R.id.name)
         userHandleText = findViewById(R.id.tvUserHandle)
@@ -252,9 +252,10 @@ class profile : AppCompatActivity() {
             pfpPickerLauncher.launch("image/*")
         }
 
-        // Tap Cover button to change profile background image
-        btnChangeCover.setOnClickListener {
-            coverPickerLauncher.launch("image/*")
+        // Hold on profile background area to change or reset background image
+        profileHeroContainer.setOnLongClickListener {
+            showBackgroundOptionsDialog()
+            true
         }
 
         // Open Settings Screen on clicking settings icon or Edit Profile
@@ -325,7 +326,48 @@ class profile : AppCompatActivity() {
         )
     }
 
+    private fun showBackgroundOptionsDialog() {
+        val dialog = BottomSheetDialog(this)
+        val view = layoutInflater.inflate(R.layout.dialog_background_options, null)
+        dialog.setContentView(view)
+
+        view.findViewById<View>(R.id.btnBgClose).setOnClickListener {
+            dialog.dismiss()
+        }
+
+        view.findViewById<View>(R.id.btnChooseBackground).setOnClickListener {
+            dialog.dismiss()
+            coverPickerLauncher.launch("image/*")
+        }
+
+        view.findViewById<View>(R.id.btnResetBackground).setOnClickListener {
+            dialog.dismiss()
+            val uid = auth.currentUser?.uid ?: return@setOnClickListener
+            CloudinaryHelper.saveCoverPhotoToFirebase(
+                uid = uid,
+                imageUrl = "",
+                db = db,
+                onSuccess = {
+                    if (isFinishing || isDestroyed) return@saveCoverPhotoToFirebase
+                    ivProfileBanner.setImageDrawable(null)
+                    ivProfileBanner.setBackgroundResource(R.drawable.bg_profile_banner_default)
+                    Toast.makeText(this, "Background reset to default", Toast.LENGTH_SHORT).show()
+                },
+                onFailure = { e ->
+                    if (isFinishing || isDestroyed) return@saveCoverPhotoToFirebase
+                    Toast.makeText(this, "Failed to reset: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                }
+            )
+        }
+
+        dialog.show()
+    }
+
     private fun uploadCoverPicture(uri: Uri) {
+        if (!inkora.isOnline(this)) {
+            Toast.makeText(this, "Internet connection is required to upload a background", Toast.LENGTH_SHORT).show()
+            return
+        }
         val uid = auth.currentUser?.uid ?: return
         Toast.makeText(this, "Uploading cover background...", Toast.LENGTH_SHORT).show()
 
@@ -398,6 +440,8 @@ class profile : AppCompatActivity() {
                         ivProfileBanner.load(coverUrl) {
                             crossfade(true)
                         }
+                    } else {
+                        ivProfileBanner.setImageDrawable(null)
                     }
                 } else {
                     nameText.text = auth.currentUser?.displayName?.takeIf { it.isNotBlank() && !it.contains("@") } ?: "Inkora User"

@@ -2,15 +2,12 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    android:background="@color/primary_background"
-    tools:context=".add_data">
+    android:background="@color/primary_background">
 
-    <!-- Top Bar -->
     <LinearLayout
         android:id="@+id/topBar"
         android:layout_width="match_parent"
@@ -53,7 +50,6 @@
             android:paddingTop="18dp"
             android:paddingBottom="24dp">
 
-            <!-- Cover Image Area (Tap to Pick Image) -->
             <FrameLayout
                 android:id="@+id/coverImageBox"
                 android:layout_width="match_parent"
@@ -102,7 +98,6 @@
                     android:indeterminateTint="@color/primary_red"
                     android:visibility="gone" />
 
-                <!-- Remove Cover Image Button -->
                 <TextView
                     android:id="@+id/btnRemoveCover"
                     android:layout_width="32dp"
@@ -118,7 +113,6 @@
                     android:visibility="gone" />
             </FrameLayout>
 
-            <!-- Category Label -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -128,7 +122,6 @@
                 android:textSize="13sp"
                 android:textStyle="bold" />
 
-            <!-- Category Selector Pills -->
             <LinearLayout
                 android:id="@+id/layoutCategories"
                 android:layout_width="match_parent"
@@ -185,7 +178,6 @@
                     android:textSize="12sp" />
             </LinearLayout>
 
-            <!-- Title Label -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -208,7 +200,6 @@
                 android:textColorHint="@color/secondary_text"
                 android:textSize="14sp" />
 
-            <!-- Content Label -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -233,7 +224,6 @@
                 android:textSize="14sp"
                 android:lineSpacingExtra="3dp" />
 
-            <!-- Publish Button -->
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/btnPublish"
                 android:layout_width="match_parent"
@@ -249,7 +239,6 @@
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-    <!-- Bottom Navigation Bar -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_nav"
         android:layout_width="match_parent"

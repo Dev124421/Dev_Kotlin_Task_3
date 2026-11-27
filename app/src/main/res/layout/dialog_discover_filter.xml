@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/bg_bottom_sheet_dark"
@@ -10,7 +9,6 @@
     android:paddingTop="12dp"
     android:paddingBottom="28dp">
 
-    <!-- Bottom Sheet Drag Handle -->
     <View
         android:layout_width="38dp"
         android:layout_height="4dp"
@@ -18,7 +16,6 @@
         android:layout_marginBottom="14dp"
         android:background="@drawable/bg_pill_filter_unselected" />
 
-    <!-- Header Row -->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -77,7 +74,6 @@
         android:layout_marginBottom="16dp"
         android:background="@color/card_surface" />
 
-    <!-- Section 1: Search Type (Posts vs People) -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -93,7 +89,6 @@
         android:layout_marginBottom="20dp"
         android:orientation="horizontal">
 
-        <!-- "Posts" Selector -->
         <TextView
             android:id="@+id/btnFilterTypePosts"
             android:layout_width="0dp"
@@ -108,7 +103,6 @@
             android:textSize="13sp"
             android:textStyle="bold" />
 
-        <!-- "People" Selector -->
         <TextView
             android:id="@+id/btnFilterTypePeople"
             android:layout_width="0dp"
@@ -125,7 +119,6 @@
             android:textStyle="bold" />
     </LinearLayout>
 
-    <!-- Section 2: Category Filters (Shown when Posts is selected) -->
     <LinearLayout
         android:id="@+id/layoutCategoryFilterSection"
         android:layout_width="match_parent"
@@ -140,7 +133,6 @@
             android:textSize="11sp"
             android:textStyle="bold" />
 
-        <!-- First Row of Categories: All, Tech, Design -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -192,7 +184,6 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Second Row of Categories: Life, Art -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -229,7 +220,6 @@
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
-            <!-- Spacer to keep 3-column balance -->
             <View
                 android:layout_width="0dp"
                 android:layout_height="36dp"
@@ -238,7 +228,6 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Apply Button -->
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/btnFilterApply"
         android:layout_width="match_parent"

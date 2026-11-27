@@ -2,15 +2,12 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    android:background="@color/primary_background"
-    tools:context=".home">
+    android:background="@color/primary_background">
 
-    <!-- Top Bar: Inkora Brand Title -->
     <FrameLayout
         android:id="@+id/headerLayout"
         android:layout_width="match_parent"
@@ -36,7 +33,6 @@
         android:background="@color/secondary_background"
         app:layout_constraintTop_toBottomOf="@id/headerLayout" />
 
-    <!-- Offline Mode Banner -->
     <TextView
         android:id="@+id/tvOfflineBanner"
         android:layout_width="match_parent"
@@ -51,7 +47,6 @@
         android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@id/headerDivider" />
 
-    <!-- Loading Indicator -->
     <ProgressBar
         android:id="@+id/pbFeedLoading"
         android:layout_width="32dp"
@@ -63,7 +58,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Empty Feed State -->
     <TextView
         android:id="@+id/tvEmptyFeed"
         android:layout_width="wrap_content"
@@ -78,7 +72,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Blog Feed SwipeRefreshLayout -->
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipeRefreshLayout"
         android:layout_width="match_parent"
@@ -99,7 +92,6 @@
 
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
-    <!-- Bottom Navigation Bar -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_nav"
         android:layout_width="match_parent"

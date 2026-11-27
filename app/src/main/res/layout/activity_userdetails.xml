@@ -2,7 +2,6 @@
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
@@ -15,8 +14,7 @@
         android:layout_height="wrap_content"
         android:paddingHorizontal="24dp"
         android:paddingTop="50dp"
-        android:paddingBottom="32dp"
-        tools:context=".userdetails">
+        android:paddingBottom="32dp">
 
         <TextView
             android:id="@+id/header"
@@ -40,7 +38,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/header" />
 
-        <!-- Name -->
         <TextView
             android:id="@+id/namehead"
             android:layout_width="wrap_content"
@@ -76,7 +73,6 @@
                 android:textSize="14sp" />
         </LinearLayout>
 
-        <!-- Username -->
         <TextView
             android:id="@+id/usernamehead"
             android:layout_width="wrap_content"
@@ -121,7 +117,6 @@
                 android:textSize="14sp" />
         </LinearLayout>
 
-        <!-- Age -->
         <TextView
             android:id="@+id/agehead"
             android:layout_width="wrap_content"
@@ -157,7 +152,6 @@
                 android:textSize="14sp" />
         </LinearLayout>
 
-        <!-- Gender -->
         <TextView
             android:id="@+id/genderhead"
             android:layout_width="wrap_content"
@@ -193,7 +187,6 @@
                 android:textSize="14sp" />
         </LinearLayout>
 
-        <!-- Address -->
         <TextView
             android:id="@+id/addresshead"
             android:layout_width="wrap_content"
@@ -229,7 +222,6 @@
                 android:textSize="14sp" />
         </LinearLayout>
 
-        <!-- Submit Button -->
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/submitbtn"
             android:layout_width="match_parent"
